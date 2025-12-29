@@ -1,112 +1,229 @@
--- Membuat service Players
-local Players = game:GetService("Players")
-local debounceTable = {} -- Untuk mencegah duplikasi hitbox
+-- ============================================
+-- CUSTOM HIT BOX SCRIPT UNTUK ROBLOX
+-- Membuat hit box merah 10x10x10 yang dapat dilalui
+-- ============================================
 
--- Fungsi untuk membuat HIT BOX invisible
-local function createInvisibleHitbox(character)
-    -- Validasi: pastikan character valid
-    if not character or not character.Parent then
-        return
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- ============================================
+-- KONFIGURASI HIT BOX
+-- ============================================
+local CONFIG = {
+    Size = Vector3.new(10, 10, 10), -- Ukuran hit box (10x10x10)
+    Color = Color3.fromRGB(255, 0, 0), -- Warna merah
+    Transparency = 0.5, -- Semi-transparan agar terlihat tapi tidak menghalangi pandangan
+    Material = Enum.Material.Neon, -- Material Neon untuk efek visual yang lebih baik
+    CanCollide = false, -- Dapat dilalui oleh pemain
+}
+
+-- ============================================
+-- VARIABEL GLOBAL
+-- ============================================
+local hitBox = nil
+local hitBoxEnabled = false
+local updateConnection = nil
+
+-- ============================================
+-- FUNGSI: MEMBUAT GUI TOGGLE
+-- ============================================
+local function createGUI()
+    -- Cek apakah GUI sudah ada
+    if player.PlayerGui:FindFirstChild("HitBoxGUI") then
+        player.PlayerGui.HitBoxGUI:Destroy()
     end
     
-    -- Cegah duplikasi dengan debounce system
-    if debounceTable[character] then
-        return
-    end
-    debounceTable[character] = true
+    -- Buat ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "HitBoxGUI"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = player.PlayerGui
     
-    -- Hapus hitbox lama jika ada
-    local existingHitbox = character:FindFirstChild("InvisibleHitbox")
-    if existingHitbox then
-        existingHitbox:Destroy()
-    end
+    -- Buat Frame container
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 200, 0, 80)
+    frame.Position = UDim2.new(0, 10, 0, 10)
+    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    frame.BorderSizePixel = 2
+    frame.BorderColor3 = Color3.fromRGB(255, 255, 255)
+    frame.Parent = screenGui
     
-    -- Buat hitbox baru
-    local hitbox = Instance.new("SelectionBox")
-    hitbox.Name = "InvisibleHitbox" -- Nama spesifik untuk memudahkan identifikasi
-    hitbox.Adornee = character
-    hitbox.Size = Vector3.new(10, 10, 10)
-    hitbox.Color3 = Color3.new(0, 0, 0)
-    hitbox.Transparency = 1 -- Total transparan
-    hitbox.LineThickness = 0.01 -- Tipis agar benar-benar tidak terlihat
-    hitbox.SurfaceTransparency = 1
-    hitbox.SurfaceColor3 = Color3.new(0, 0, 0)
-    hitbox.Parent = character
+    -- Tambahkan UICorner untuk rounded edges
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
     
-    -- Setup debounce cleanup
-    local connection
-    connection = character.Destroying:Connect(function()
-        debounceTable[character] = nil
-        if connection then
-            connection:Disconnect()
+    -- Buat Label judul
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, 0, 0, 30)
+    titleLabel.Position = UDim2.new(0, 0, 0, 5)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "Hit Box Control"
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 16
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = frame
+    
+    -- Buat Toggle Button
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 180, 0, 35)
+    toggleButton.Position = UDim2.new(0, 10, 0, 40)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    toggleButton.Text = "OFF"
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleButton.TextSize = 14
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.Parent = frame
+    
+    -- UICorner untuk button
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 6)
+    buttonCorner.Parent = toggleButton
+    
+    -- Event handler untuk toggle button
+    toggleButton.MouseButton1Click:Connect(function()
+        hitBoxEnabled = not hitBoxEnabled
+        
+        if hitBoxEnabled then
+            toggleButton.Text = "ON"
+            toggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+            createHitBox()
+        else
+            toggleButton.Text = "OFF"
+            toggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+            destroyHitBox()
         end
     end)
     
-    -- Debug info
-    print("✅ HIT BOX invisible dibuat untuk", character.Name)
+    return screenGui
 end
 
--- Fungsi untuk menghilangkan HIT BOX
-local function removeHitbox(character)
-    if not character then
-        return
-    end
-    
-    local hitbox = character:FindFirstChild("InvisibleHitbox")
-    if hitbox then
-        hitbox:Destroy()
-        print("🗑️ HIT BOX invisible dihapus untuk", character.Name)
-    end
-    
-    -- Bersihkan dari debounce table
-    debounceTable[character] = nil
+-- ============================================
+-- FUNGSI: MEMBUAT HIT BOX
+-- ============================================
+local function createHitBox()
+    pcall(function()
+        -- Hapus hit box lama jika ada
+        if hitBox then
+            hitBox:Destroy()
+        end
+        
+        -- Dapatkan karakter pemain
+        local character = player.Character
+        if not character then
+            warn("Karakter tidak ditemukan!")
+            return
+        end
+        
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then
+            warn("HumanoidRootPart tidak ditemukan!")
+            return
+        end
+        
+        -- Buat Part untuk hit box
+        hitBox = Instance.new("Part")
+        hitBox.Name = "CustomHitBox"
+        hitBox.Size = CONFIG.Size
+        hitBox.Color = CONFIG.Color
+        hitBox.Transparency = CONFIG.Transparency
+        hitBox.Material = CONFIG.Material
+        hitBox.CanCollide = CONFIG.CanCollide
+        hitBox.Anchored = false
+        hitBox.Massless = true -- Tidak mempengaruhi fisika karakter
+        
+        -- Tambahkan WeldConstraint untuk menempel pada karakter
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = humanoidRootPart
+        weld.Part1 = hitBox
+        weld.Parent = hitBox
+        
+        -- Masukkan hit box ke dalam karakter
+        hitBox.Parent = character
+        
+        print("Hit box berhasil dibuat!")
+    end)
 end
 
--- ===== EVENT HANDLERS =====
-
--- Event saat player bergabung ke game
-Players.PlayerAdded:Connect(function(player)
-    -- Event saat player membuat karakter baru (respawn/spawn pertama)
-    player.CharacterAdded:Connect(function(character)
-        -- Tunggu 0.1 detik untuk memastikan character fully loaded
-        task.wait(0.1)
-        createInvisibleHitbox(character)
+-- ============================================
+-- FUNGSI: MENGHAPUS HIT BOX
+-- ============================================
+local function destroyHitBox()
+    pcall(function()
+        if hitBox then
+            hitBox:Destroy()
+            hitBox = nil
+            print("Hit box dihapus!")
+        end
     end)
+end
+
+-- ============================================
+-- FUNGSI: UPDATE POSISI HIT BOX
+-- ============================================
+local function updateHitBoxPosition()
+    if not hitBoxEnabled or not hitBox then return end
     
-    -- Event saat karakter akan dihapus (sebelum respawn)
-    player.CharacterRemoving:Connect(function(character)
-        removeHitbox(character)
+    pcall(function()
+        local character = player.Character
+        if not character then return end
+        
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        -- Hit box akan mengikuti HumanoidRootPart melalui WeldConstraint
+        -- Tidak perlu update manual posisi
     end)
-end)
+end
 
--- Event saat player keluar dari game
-Players.PlayerRemoving:Connect(function(player)
-    local character = player.Character
-    if character then
-        removeHitbox(character)
+-- ============================================
+-- FUNGSI: HANDLE CHARACTER RESPAWN
+-- ============================================
+local function onCharacterAdded(character)
+    -- Tunggu karakter sepenuhnya dimuat
+    character:WaitForChild("HumanoidRootPart")
+    
+    -- Jika hit box aktif, buat ulang setelah respawn
+    if hitBoxEnabled then
+        wait(0.5) -- Delay kecil untuk memastikan karakter siap
+        createHitBox()
     end
-end)
+end
 
--- ===== HANDLE PLAYER YANG SUDAH ADA DI GAME =====
-
-for _, player in ipairs(Players:GetPlayers()) do
-    -- Jika player sudah punya karakter
+-- ============================================
+-- INISIALISASI
+-- ============================================
+local function initialize()
+    -- Buat GUI
+    createGUI()
+    
+    -- Setup event untuk respawn
+    player.CharacterAdded:Connect(onCharacterAdded)
+    
+    -- Jika karakter sudah ada, setup sekarang
     if player.Character then
-        createInvisibleHitbox(player.Character)
+        onCharacterAdded(player.Character)
     end
     
-    -- Setup events untuk player yang sudah ada
-    player.CharacterAdded:Connect(function(character)
-        task.wait(0.1)
-        createInvisibleHitbox(character)
-    end)
+    -- Setup update loop (opsional, untuk validasi)
+    updateConnection = RunService.Heartbeat:Connect(updateHitBoxPosition)
     
-    player.CharacterRemoving:Connect(function(character)
-        removeHitbox(character)
-    end)
+    print("Hit Box Script berhasil diinisialisasi!")
+    print("Gunakan tombol toggle di kiri atas untuk mengaktifkan/menonaktifkan hit box.")
 end
 
--- Notifikasi saat script aktif
-print("=========================================")
-print("🚀 Script aktif: HIT BOX invisible untuk semua player")
-print("=========================================")
+-- ============================================
+-- CLEANUP SAAT SCRIPT DIHAPUS
+-- ============================================
+game:GetService("Players").PlayerRemoving:Connect(function(removingPlayer)
+    if removingPlayer == player then
+        destroyHitBox()
+        if updateConnection then
+            updateConnection:Disconnect()
+        end
+    end
+end)
+
+-- Jalankan inisialisasi
+initialize()
