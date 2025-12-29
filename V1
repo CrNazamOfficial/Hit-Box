@@ -1,229 +1,394 @@
--- ============================================
--- CUSTOM HIT BOX SCRIPT UNTUK ROBLOX
--- Membuat hit box merah 10x10x10 yang dapat dilalui
--- ============================================
+--[[
+    ========================================
+    SCRIPT HIT BOX EXPANDER - FUNCTIONAL
+    ========================================
+    Deskripsi: Script untuk memperbesar hitbox yang BENAR-BENAR BERFUNGSI
+    Hit box merah 10x10x10 dapat menerima damage
+    Untuk digunakan dengan loadstring
+    ========================================
+--]]
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-
--- ============================================
--- KONFIGURASI HIT BOX
--- ============================================
+-- =====================================
+-- KONFIGURASI
+-- =====================================
 local CONFIG = {
-    Size = Vector3.new(10, 10, 10), -- Ukuran hit box (10x10x10)
-    Color = Color3.fromRGB(255, 0, 0), -- Warna merah
-    Transparency = 0.5, -- Semi-transparan agar terlihat tapi tidak menghalangi pandangan
-    Material = Enum.Material.Neon, -- Material Neon untuk efek visual yang lebih baik
-    CanCollide = false, -- Dapat dilalui oleh pemain
+    HitBoxSize = Vector3.new(10, 10, 10),
+    VisualColor = Color3.fromRGB(255, 0, 0), -- Merah untuk visual
+    Transparency = 0.5,
+    Material = Enum.Material.Neon,
+    ShowVisual = true -- Tampilkan visual hit box atau tidak
 }
 
--- ============================================
+-- =====================================
 -- VARIABEL GLOBAL
--- ============================================
-local hitBox = nil
-local hitBoxEnabled = false
-local updateConnection = nil
+-- =====================================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local HitBoxEnabled = false
+local OriginalSizes = {}
+local VisualParts = {}
+local Connections = {}
 
--- ============================================
--- FUNGSI: MEMBUAT GUI TOGGLE
--- ============================================
-local function createGUI()
-    -- Cek apakah GUI sudah ada
-    if player.PlayerGui:FindFirstChild("HitBoxGUI") then
-        player.PlayerGui.HitBoxGUI:Destroy()
-    end
-    
-    -- Buat ScreenGui
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "HitBoxGUI"
-    screenGui.ResetOnSpawn = false
-    screenGui.Parent = player.PlayerGui
-    
-    -- Buat Frame container
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 200, 0, 80)
-    frame.Position = UDim2.new(0, 10, 0, 10)
-    frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    frame.BorderSizePixel = 2
-    frame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    frame.Parent = screenGui
-    
-    -- Tambahkan UICorner untuk rounded edges
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = frame
-    
-    -- Buat Label judul
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, 0, 0, 30)
-    titleLabel.Position = UDim2.new(0, 0, 0, 5)
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "Hit Box Control"
-    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.TextSize = 16
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Parent = frame
-    
-    -- Buat Toggle Button
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0, 180, 0, 35)
-    toggleButton.Position = UDim2.new(0, 10, 0, 40)
-    toggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    toggleButton.Text = "OFF"
-    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleButton.TextSize = 14
-    toggleButton.Font = Enum.Font.GothamBold
-    toggleButton.Parent = frame
-    
-    -- UICorner untuk button
-    local buttonCorner = Instance.new("UICorner")
-    buttonCorner.CornerRadius = UDim.new(0, 6)
-    buttonCorner.Parent = toggleButton
-    
-    -- Event handler untuk toggle button
-    toggleButton.MouseButton1Click:Connect(function()
-        hitBoxEnabled = not hitBoxEnabled
-        
-        if hitBoxEnabled then
-            toggleButton.Text = "ON"
-            toggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-            createHitBox()
-        else
-            toggleButton.Text = "OFF"
-            toggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-            destroyHitBox()
-        end
-    end)
-    
-    return screenGui
-end
-
--- ============================================
--- FUNGSI: MEMBUAT HIT BOX
--- ============================================
-local function createHitBox()
-    pcall(function()
-        -- Hapus hit box lama jika ada
-        if hitBox then
-            hitBox:Destroy()
-        end
-        
-        -- Dapatkan karakter pemain
-        local character = player.Character
-        if not character then
-            warn("Karakter tidak ditemukan!")
-            return
-        end
-        
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        if not humanoidRootPart then
-            warn("HumanoidRootPart tidak ditemukan!")
-            return
-        end
-        
-        -- Buat Part untuk hit box
-        hitBox = Instance.new("Part")
-        hitBox.Name = "CustomHitBox"
-        hitBox.Size = CONFIG.Size
-        hitBox.Color = CONFIG.Color
-        hitBox.Transparency = CONFIG.Transparency
-        hitBox.Material = CONFIG.Material
-        hitBox.CanCollide = CONFIG.CanCollide
-        hitBox.Anchored = false
-        hitBox.Massless = true -- Tidak mempengaruhi fisika karakter
-        
-        -- Tambahkan WeldConstraint untuk menempel pada karakter
-        local weld = Instance.new("WeldConstraint")
-        weld.Part0 = humanoidRootPart
-        weld.Part1 = hitBox
-        weld.Parent = hitBox
-        
-        -- Masukkan hit box ke dalam karakter
-        hitBox.Parent = character
-        
-        print("Hit box berhasil dibuat!")
-    end)
-end
-
--- ============================================
--- FUNGSI: MENGHAPUS HIT BOX
--- ============================================
-local function destroyHitBox()
-    pcall(function()
-        if hitBox then
-            hitBox:Destroy()
-            hitBox = nil
-            print("Hit box dihapus!")
-        end
-    end)
-end
-
--- ============================================
--- FUNGSI: UPDATE POSISI HIT BOX
--- ============================================
-local function updateHitBoxPosition()
-    if not hitBoxEnabled or not hitBox then return end
-    
-    pcall(function()
-        local character = player.Character
+-- =====================================
+-- FUNGSI: EXPAND HITBOX (METODE UTAMA)
+-- =====================================
+local function expandHitBox(character)
+    local success, err = pcall(function()
         if not character then return end
         
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
         if not humanoidRootPart then return end
         
-        -- Hit box akan mengikuti HumanoidRootPart melalui WeldConstraint
-        -- Tidak perlu update manual posisi
+        -- Simpan ukuran original jika belum
+        if not OriginalSizes[character] then
+            OriginalSizes[character] = {
+                Size = humanoidRootPart.Size,
+                Transparency = humanoidRootPart.Transparency
+            }
+        end
+        
+        -- Perbesar HumanoidRootPart (ini yang membuat hit detection bekerja)
+        humanoidRootPart.Size = CONFIG.HitBoxSize
+        humanoidRootPart.Transparency = 1 -- Buat tidak terlihat
+        humanoidRootPart.Massless = true
+        humanoidRootPart.CanCollide = false
+        
+        -- Buat visual hit box jika diaktifkan
+        if CONFIG.ShowVisual then
+            createVisualHitBox(character, humanoidRootPart)
+        end
+        
+        print("✓ Hit box expanded untuk: " .. character.Name)
+    end)
+    
+    if not success then
+        warn("Error expanding hitbox: " .. tostring(err))
+    end
+end
+
+-- =====================================
+-- FUNGSI: BUAT VISUAL HIT BOX
+-- =====================================
+local function createVisualHitBox(character, rootPart)
+    pcall(function()
+        -- Hapus visual lama jika ada
+        if VisualParts[character] then
+            VisualParts[character]:Destroy()
+        end
+        
+        -- Buat part visual
+        local visualPart = Instance.new("Part")
+        visualPart.Name = "HitBoxVisual"
+        visualPart.Size = CONFIG.HitBoxSize
+        visualPart.Color = CONFIG.VisualColor
+        visualPart.Transparency = CONFIG.Transparency
+        visualPart.Material = CONFIG.Material
+        visualPart.CanCollide = false
+        visualPart.Anchored = false
+        visualPart.Massless = true
+        visualPart.CastShadow = false
+        
+        -- Weld ke HumanoidRootPart
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = rootPart
+        weld.Part1 = visualPart
+        weld.Parent = visualPart
+        
+        visualPart.Parent = workspace
+        VisualParts[character] = visualPart
     end)
 end
 
--- ============================================
--- FUNGSI: HANDLE CHARACTER RESPAWN
--- ============================================
-local function onCharacterAdded(character)
-    -- Tunggu karakter sepenuhnya dimuat
-    character:WaitForChild("HumanoidRootPart")
-    
-    -- Jika hit box aktif, buat ulang setelah respawn
-    if hitBoxEnabled then
-        wait(0.5) -- Delay kecil untuk memastikan karakter siap
-        createHitBox()
-    end
+-- =====================================
+-- FUNGSI: RESTORE HITBOX
+-- =====================================
+local function restoreHitBox(character)
+    pcall(function()
+        if not character then return end
+        
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart and OriginalSizes[character] then
+            -- Kembalikan ukuran original
+            humanoidRootPart.Size = OriginalSizes[character].Size
+            humanoidRootPart.Transparency = OriginalSizes[character].Transparency
+        end
+        
+        -- Hapus visual
+        if VisualParts[character] then
+            VisualParts[character]:Destroy()
+            VisualParts[character] = nil
+        end
+        
+        OriginalSizes[character] = nil
+    end)
 end
 
--- ============================================
--- INISIALISASI
--- ============================================
-local function initialize()
-    -- Buat GUI
-    createGUI()
+-- =====================================
+-- FUNGSI: TOGGLE HIT BOX
+-- =====================================
+local function toggleHitBox()
+    HitBoxEnabled = not HitBoxEnabled
     
-    -- Setup event untuk respawn
-    player.CharacterAdded:Connect(onCharacterAdded)
-    
-    -- Jika karakter sudah ada, setup sekarang
-    if player.Character then
-        onCharacterAdded(player.Character)
-    end
-    
-    -- Setup update loop (opsional, untuk validasi)
-    updateConnection = RunService.Heartbeat:Connect(updateHitBoxPosition)
-    
-    print("Hit Box Script berhasil diinisialisasi!")
-    print("Gunakan tombol toggle di kiri atas untuk mengaktifkan/menonaktifkan hit box.")
-end
-
--- ============================================
--- CLEANUP SAAT SCRIPT DIHAPUS
--- ============================================
-game:GetService("Players").PlayerRemoving:Connect(function(removingPlayer)
-    if removingPlayer == player then
-        destroyHitBox()
-        if updateConnection then
-            updateConnection:Disconnect()
+    local character = LocalPlayer.Character
+    if character then
+        if HitBoxEnabled then
+            expandHitBox(character)
+        else
+            restoreHitBox(character)
         end
     end
-end)
+    
+    return HitBoxEnabled
+end
 
--- Jalankan inisialisasi
+-- =====================================
+-- FUNGSI: MAINTAIN HITBOX (ANTI RESET)
+-- =====================================
+local function maintainHitBox()
+    -- Loop untuk memastikan hitbox tetap expanded
+    Connections.Maintain = RunService.Heartbeat:Connect(function()
+        if not HitBoxEnabled then return end
+        
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if not humanoidRootPart then return end
+        
+        -- Pastikan ukuran tetap besar
+        if humanoidRootPart.Size ~= CONFIG.HitBoxSize then
+            humanoidRootPart.Size = CONFIG.HitBoxSize
+            humanoidRootPart.Transparency = 1
+        end
+    end)
+end
+
+-- =====================================
+-- FUNGSI: SETUP CHARACTER
+-- =====================================
+local function setupCharacter(character)
+    pcall(function()
+        if not character then return end
+        
+        -- Tunggu HumanoidRootPart loaded
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 10)
+        if not humanoidRootPart then return end
+        
+        -- Jika hitbox enabled, expand
+        if HitBoxEnabled then
+            task.wait(0.5) -- Delay sedikit untuk stabilitas
+            expandHitBox(character)
+        end
+    end)
+end
+
+-- =====================================
+-- FUNGSI: MEMBUAT GUI
+-- =====================================
+local function createGUI()
+    local success, gui = pcall(function()
+        -- Cek jika GUI sudah ada
+        local existingGui = LocalPlayer.PlayerGui:FindFirstChild("HitBoxGUI")
+        if existingGui then
+            existingGui:Destroy()
+        end
+        
+        -- Buat ScreenGui
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "HitBoxGUI"
+        screenGui.ResetOnSpawn = false
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        
+        -- Frame utama
+        local mainFrame = Instance.new("Frame")
+        mainFrame.Name = "MainFrame"
+        mainFrame.Size = UDim2.new(0, 220, 0, 110)
+        mainFrame.Position = UDim2.new(0, 20, 0, 20)
+        mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        mainFrame.BorderSizePixel = 0
+        mainFrame.Parent = screenGui
+        
+        -- UICorner
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 12)
+        corner.Parent = mainFrame
+        
+        -- Gradient
+        local gradient = Instance.new("UIGradient")
+        gradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 35)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 25))
+        }
+        gradient.Rotation = 90
+        gradient.Parent = mainFrame
+        
+        -- Label judul
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Name = "Title"
+        titleLabel.Size = UDim2.new(1, -20, 0, 30)
+        titleLabel.Position = UDim2.new(0, 10, 0, 5)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = "🎯 HIT BOX EXPANDER"
+        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.TextSize = 15
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = mainFrame
+        
+        -- Status label
+        local statusLabel = Instance.new("TextLabel")
+        statusLabel.Name = "Status"
+        statusLabel.Size = UDim2.new(1, -20, 0, 20)
+        statusLabel.Position = UDim2.new(0, 10, 0, 35)
+        statusLabel.BackgroundTransparency = 1
+        statusLabel.Text = "Size: 10x10x10 | Status: OFF"
+        statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+        statusLabel.TextSize = 12
+        statusLabel.Font = Enum.Font.Gotham
+        statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+        statusLabel.Parent = mainFrame
+        
+        -- Tombol toggle
+        local toggleButton = Instance.new("TextButton")
+        toggleButton.Name = "ToggleButton"
+        toggleButton.Size = UDim2.new(0, 180, 0, 40)
+        toggleButton.Position = UDim2.new(0.5, 0, 0, 60)
+        toggleButton.AnchorPoint = Vector2.new(0.5, 0)
+        toggleButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        toggleButton.Text = "❌ DISABLED"
+        toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggleButton.TextSize = 16
+        toggleButton.Font = Enum.Font.GothamBold
+        toggleButton.BorderSizePixel = 0
+        toggleButton.Parent = mainFrame
+        
+        -- UICorner tombol
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 8)
+        buttonCorner.Parent = toggleButton
+        
+        -- Fungsi tombol
+        toggleButton.MouseButton1Click:Connect(function()
+            local enabled = toggleHitBox()
+            
+            if enabled then
+                toggleButton.Text = "✅ ENABLED"
+                toggleButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+                statusLabel.Text = "Size: 10x10x10 | Status: ON"
+                statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            else
+                toggleButton.Text = "❌ DISABLED"
+                toggleButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+                statusLabel.Text = "Size: 10x10x10 | Status: OFF"
+                statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+            end
+        end)
+        
+        -- Tambahkan draggable
+        local dragging, dragInput, dragStart, startPos
+        
+        mainFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = mainFrame.Position
+            end
+        end)
+        
+        mainFrame.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
+        game:GetService("UserInputService").InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - dragStart
+                mainFrame.Position = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + delta.Y
+                )
+            end
+        end)
+        
+        screenGui.Parent = LocalPlayer.PlayerGui
+        return screenGui
+    end)
+    
+    if not success then
+        warn("Error creating GUI: " .. tostring(gui))
+    end
+end
+
+-- =====================================
+-- FUNGSI: CLEANUP
+-- =====================================
+local function cleanup()
+    pcall(function()
+        -- Disconnect semua connections
+        for _, conn in pairs(Connections) do
+            if conn then conn:Disconnect() end
+        end
+        Connections = {}
+        
+        -- Restore semua hitbox
+        for character, _ in pairs(OriginalSizes) do
+            restoreHitBox(character)
+        end
+        
+        -- Hapus GUI
+        local gui = LocalPlayer.PlayerGui:FindFirstChild("HitBoxGUI")
+        if gui then gui:Destroy() end
+    end)
+end
+
+-- =====================================
+-- INISIALISASI SCRIPT
+-- =====================================
+local function initialize()
+    local success, err = pcall(function()
+        print("========================================")
+        print("🎯 HIT BOX EXPANDER V1")
+        print("========================================")
+        
+        -- Buat GUI
+        createGUI()
+        
+        -- Setup maintain hitbox
+        maintainHitBox()
+        
+        -- Setup character saat ini
+        if LocalPlayer.Character then
+            setupCharacter(LocalPlayer.Character)
+        end
+        
+        -- Handle character respawn
+        Connections.CharacterAdded = LocalPlayer.CharacterAdded:Connect(function(character)
+            setupCharacter(character)
+        end)
+        
+        -- Cleanup saat script unloaded
+        game:GetService("Players").PlayerRemoving:Connect(function(player)
+            if player == LocalPlayer then
+                cleanup()
+            end
+        end)
+        
+        print("✅ Script loaded successfully!")
+        print("📌 Click the button to toggle hitbox")
+        print("🎯 Hitbox size: 10x10x10")
+        print("========================================")
+    end)
+    
+    if not success then
+        warn("❌ Initialization error: " .. tostring(err))
+    end
+end
+
+-- =====================================
+-- JALANKAN SCRIPT
+-- =====================================
 initialize()
