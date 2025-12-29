@@ -1,257 +1,112 @@
+-- Membuat service Players
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-local hitboxSize = Vector3.new(12, 12, 12)  -- Sedikit lebih besar
-local playerHitboxData = {}
-local globalUpdateActive = true
+local debounceTable = {} -- Untuk mencegah duplikasi hitbox
 
--- NOTIFIKASI MODERN (akan kita modif nanti)
-local function notification(text, textColor, boxColor, borderColor, duration)
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Parent = game:GetService("CoreGui")
-
-    local notificationFrame = Instance.new("Frame")
-    notificationFrame.Size = UDim2.new(0, 250, 0, 60)  -- Lebar sedikit
-    notificationFrame.Position = UDim2.new(0.5, -125, 0.1, 0)
-    notificationFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)  -- Biru gelap
-    notificationFrame.BackgroundTransparency = 0.2  -- Sedikit transparan
-    
-    -- Modern corner
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = notificationFrame
-    
-    -- Glow border
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = borderColor
-    stroke.Thickness = 2
-    stroke.Transparency = 0.3
-    stroke.Parent = notificationFrame
-    
-    notificationFrame.Parent = screenGui
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(0.9, 0, 0.8, 0)
-    textLabel.Position = UDim2.new(0.05, 0, 0.1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = textColor
-    textLabel.Text = "⚡ " .. text .. " ⚡"
-    textLabel.Font = Enum.Font.GothamBold
-    textLabel.TextSize = 22
-    textLabel.TextStrokeTransparency = 0.7
-    textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-    textLabel.Parent = notificationFrame
-
-    -- Animasi fade in/out
-    notificationFrame.BackgroundTransparency = 1
-    textLabel.TextTransparency = 1
-    
-    local tweenIn = game:GetService("TweenService"):Create(
-        notificationFrame,
-        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {BackgroundTransparency = 0.2}
-    )
-    
-    local tweenInText = game:GetService("TweenService"):Create(
-        textLabel,
-        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {TextTransparency = 0}
-    )
-    
-    tweenIn:Play()
-    tweenInText:Play()
-    
-    task.spawn(function()
-        task.wait(duration - 0.6)
-        
-        local tweenOut = game:GetService("TweenService"):Create(
-            notificationFrame,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {BackgroundTransparency = 1}
-        )
-        
-        local tweenOutText = game:GetService("TweenService"):Create(
-            textLabel,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {TextTransparency = 1}
-        )
-        
-        tweenOut:Play()
-        tweenOutText:Play()
-        
-        task.wait(0.35)
-        if screenGui and screenGui.Parent then
-            screenGui:Destroy()
-        end
-    end)
-end
-
--- GLOBAL UPDATE LOOP
-local function startGlobalUpdateLoop()
-    RunService.Heartbeat:Connect(function()
-        if not globalUpdateActive then return end
-        
-        for targetPlayer, data in pairs(playerHitboxData) do
-            if data and data.hitbox and data.hitbox.Parent then
-                local character = data.character
-                if character and character.Parent then
-                    local hrp = character:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        -- Update position dengan offset agar tidak overlap
-                        data.hitbox.Position = hrp.Position + Vector3.new(0, 0.5, 0)
-                    else
-                        if data.hitbox then
-                            data.hitbox:Destroy()
-                        end
-                        playerHitboxData[targetPlayer] = nil
-                    end
-                end
-            end
-        end
-    end)
-end
-
--- BUAT HITBOX YANG BISA DILEWATI TAPI KENA DAMAGE
-local function createHitBox(character, targetPlayer)
-    local hitbox = Instance.new("Part")
-    hitbox.Name = "HitboxHelper_" .. targetPlayer.Name
-    hitbox.Size = hitboxSize
-    hitbox.Anchored = false  -- ⚠️ JANGAN ANCHORED!
-    hitbox.CanCollide = false  -- ⚠️ BISA DILEWATIN!
-    hitbox.Transparency = 1
-    hitbox.Parent = workspace
-    
-    -- ⚠️ TRICK PENTING: Simulasi sebagai bagian dari character
-    -- Tapi jangan jadikan child langsung
-    hitbox.Massless = true
-    
-    -- BodyVelocity untuk ikut gerak
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-    bodyVelocity.Parent = hitbox
-    
-    -- Tag khusus untuk game detection
-    hitbox:SetAttribute("IsPlayerHitbox", true)
-    hitbox:SetAttribute("TargetPlayer", targetPlayer.Name)
-    
-    return {
-        hitbox = hitbox, 
-        character = character,
-        bodyVelocity = bodyVelocity
-    }
-end
-
--- SETUP PLAYER DENGAN SISTEM BARU
-local function setupPlayerHitbox(targetPlayer)
-    if targetPlayer == player then return end
-    
-    local function onCharacterAdded(character)
-        if not character or not character.Parent then return end
-        
-        task.wait(0.3)
-        
-        -- Hapus hitbox lama
-        if playerHitboxData[targetPlayer] then
-            if playerHitboxData[targetPlayer].hitbox then
-                playerHitboxData[targetPlayer].hitbox:Destroy()
-            end
-            playerHitboxData[targetPlayer] = nil
-        end
-        
-        -- Tunggu HRP
-        local hrp = character:WaitForChild("HumanoidRootPart", 2)
-        if hrp then
-            playerHitboxData[targetPlayer] = createHitBox(character, targetPlayer)
-            
-            -- Setup velocity update
-            local hitbox = playerHitboxData[targetPlayer].hitbox
-            local bodyVel = playerHitboxData[targetPlayer].bodyVelocity
-            
-            -- Force position update loop terpisah
-            task.spawn(function()
-                while hitbox and hitbox.Parent and character and character.Parent do
-                    if hrp then
-                        bodyVel.Velocity = (hrp.Position - hitbox.Position) * 10
-                        hitbox.CFrame = CFrame.new(hrp.Position) * CFrame.new(0, 0.5, 0)
-                    end
-                    task.wait()
-                end
-            end)
-        end
+-- Fungsi untuk membuat HIT BOX invisible
+local function createInvisibleHitbox(character)
+    -- Validasi: pastikan character valid
+    if not character or not character.Parent then
+        return
     end
     
-    targetPlayer.CharacterAdded:Connect(onCharacterAdded)
-    
-    if targetPlayer.Character then
-        onCharacterAdded(targetPlayer.Character)
+    -- Cegah duplikasi dengan debounce system
+    if debounceTable[character] then
+        return
     end
-end
-
--- HIT DETECTION SYSTEM TAMBAHAN
-local function setupGlobalHitDetection()
-    -- Global touch detector untuk semua hitbox
-    workspace.DescendantAdded:Connect(function(descendant)
-        if descendant:IsA("BasePart") and descendant.Name == "HitboxHelper_" then
-            descendant.Touched:Connect(function(hit)
-                -- Cek jika yang nge-hit adalah projectile/weapon player
-                if hit and hit.Parent and hit.Parent == player.Character then
-                    -- Cari target player dari attribute
-                    local targetName = descendant:GetAttribute("TargetPlayer")
-                    local targetPlayer = Players:FindFirstChild(targetName)
-                    
-                    if targetPlayer and targetPlayer.Character then
-                        -- Trigger damage (ini akan diproses game)
-                        -- Hitbox hanya sebagai trigger point
-                        descendant.BrickColor = BrickColor.new("Really red")
-                        task.wait(0.05)
-                        descendant.BrickColor = BrickColor.new("White")
-                    end
-                end
-            end)
+    debounceTable[character] = true
+    
+    -- Hapus hitbox lama jika ada
+    local existingHitbox = character:FindFirstChild("InvisibleHitbox")
+    if existingHitbox then
+        existingHitbox:Destroy()
+    end
+    
+    -- Buat hitbox baru
+    local hitbox = Instance.new("SelectionBox")
+    hitbox.Name = "InvisibleHitbox" -- Nama spesifik untuk memudahkan identifikasi
+    hitbox.Adornee = character
+    hitbox.Size = Vector3.new(10, 10, 10)
+    hitbox.Color3 = Color3.new(0, 0, 0)
+    hitbox.Transparency = 1 -- Total transparan
+    hitbox.LineThickness = 0.01 -- Tipis agar benar-benar tidak terlihat
+    hitbox.SurfaceTransparency = 1
+    hitbox.SurfaceColor3 = Color3.new(0, 0, 0)
+    hitbox.Parent = character
+    
+    -- Setup debounce cleanup
+    local connection
+    connection = character.Destroying:Connect(function()
+        debounceTable[character] = nil
+        if connection then
+            connection:Disconnect()
         end
     end)
+    
+    -- Debug info
+    print("✅ HIT BOX invisible dibuat untuk", character.Name)
 end
 
--- INITIAL SETUP
-for _, otherPlayer in pairs(Players:GetPlayers()) do
-    if otherPlayer ~= player then
-        setupPlayerHitbox(otherPlayer)
+-- Fungsi untuk menghilangkan HIT BOX
+local function removeHitbox(character)
+    if not character then
+        return
     end
+    
+    local hitbox = character:FindFirstChild("InvisibleHitbox")
+    if hitbox then
+        hitbox:Destroy()
+        print("🗑️ HIT BOX invisible dihapus untuk", character.Name)
+    end
+    
+    -- Bersihkan dari debounce table
+    debounceTable[character] = nil
 end
 
--- PLAYER JOIN
-Players.PlayerAdded:Connect(function(newPlayer)
-    if newPlayer ~= player then
-        task.wait(1)
-        setupPlayerHitbox(newPlayer)
+-- ===== EVENT HANDLERS =====
+
+-- Event saat player bergabung ke game
+Players.PlayerAdded:Connect(function(player)
+    -- Event saat player membuat karakter baru (respawn/spawn pertama)
+    player.CharacterAdded:Connect(function(character)
+        -- Tunggu 0.1 detik untuk memastikan character fully loaded
+        task.wait(0.1)
+        createInvisibleHitbox(character)
+    end)
+    
+    -- Event saat karakter akan dihapus (sebelum respawn)
+    player.CharacterRemoving:Connect(function(character)
+        removeHitbox(character)
+    end)
+end)
+
+-- Event saat player keluar dari game
+Players.PlayerRemoving:Connect(function(player)
+    local character = player.Character
+    if character then
+        removeHitbox(character)
     end
 end)
 
--- PLAYER LEAVE
-Players.PlayerRemoving:Connect(function(leavingPlayer)
-    if playerHitboxData[leavingPlayer] then
-        local data = playerHitboxData[leavingPlayer]
-        if data.hitbox and data.hitbox.Parent then
-            data.hitbox:Destroy()
-        end
-        playerHitboxData[leavingPlayer] = nil
+-- ===== HANDLE PLAYER YANG SUDAH ADA DI GAME =====
+
+for _, player in ipairs(Players:GetPlayers()) do
+    -- Jika player sudah punya karakter
+    if player.Character then
+        createInvisibleHitbox(player.Character)
     end
-end)
-
--- START SYSTEMS
-startGlobalUpdateLoop()
-setupGlobalHitDetection()
-
--- NOTIFIKASI AKTIF MODERN
-notification("HITBOX ACTIVATED", Color3.fromRGB(255, 255, 200), Color3.fromRGB(20, 20, 30), Color3.fromRGB(100, 200, 255), 3)
-
--- ERROR HANDLER
-local function errorHandler(err)
-    notification("SYSTEM ERROR", Color3.fromRGB(255, 100, 100), Color3.fromRGB(30, 10, 10), Color3.fromRGB(255, 50, 50), 3)
-    warn("Hitbox Error:", err)
+    
+    -- Setup events untuk player yang sudah ada
+    player.CharacterAdded:Connect(function(character)
+        task.wait(0.1)
+        createInvisibleHitbox(character)
+    end)
+    
+    player.CharacterRemoving:Connect(function(character)
+        removeHitbox(character)
+    end)
 end
 
-xpcall(function()
-    -- Script utama
-end, errorHandler)
+-- Notifikasi saat script aktif
+print("=========================================")
+print("🚀 Script aktif: HIT BOX invisible untuk semua player")
+print("=========================================")
