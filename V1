@@ -48,15 +48,14 @@ local function startGlobalUpdateLoop()
                     local hrp = character:FindFirstChild("HumanoidRootPart")
                     if hrp then
                         data.hitbox.Position = hrp.Position
+                        data.hitbox.CFrame = hrp.CFrame
                     else
-                        -- Cleanup jika HRP hilang
                         if data.hitbox then
                             data.hitbox:Destroy()
                         end
                         playerHitboxData[targetPlayer] = nil
                     end
                 else
-                    -- Cleanup jika character hilang
                     if data.hitbox then
                         data.hitbox:Destroy()
                     end
@@ -67,17 +66,23 @@ local function startGlobalUpdateLoop()
     end)
 end
 
--- BUAT HITBOX
-local function createHitBox(character)
+-- BUAT HITBOX YANG LEBIH EFFECTIVE
+local function createHitBox(character, targetPlayer)
     local hitbox = Instance.new("Part")
-    hitbox.Name = "HitboxPart_" .. character.Name
+    hitbox.Name = "HitboxPart_" .. targetPlayer.Name
     hitbox.Size = hitboxSize
     hitbox.Anchored = true
-    hitbox.CanCollide = false
+    hitbox.CanCollide = true
     hitbox.Transparency = 1
-    hitbox.Parent = workspace
-
-    return {hitbox = hitbox, character = character}
+    hitbox.Parent = character  -- ⚠️ PARENT KE CHARACTER, BUKAN WORKSPACE!
+    
+    -- Tambah WeldConstraint biar solid
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = hitbox
+    weld.Part1 = character:FindFirstChild("HumanoidRootPart")
+    weld.Parent = hitbox
+    
+    return {hitbox = hitbox, character = character, weld = weld}
 end
 
 -- SETUP PLAYER
@@ -87,7 +92,7 @@ local function setupPlayerHitbox(targetPlayer)
     local function onCharacterAdded(character)
         if not character or not character.Parent then return end
         
-        task.wait(0.2)  -- Tunggu character fully load
+        task.wait(0.5)  -- Tunggu character fully load
         
         -- Hapus hitbox lama jika ada
         if playerHitboxData[targetPlayer] then
@@ -98,9 +103,24 @@ local function setupPlayerHitbox(targetPlayer)
         end
         
         -- Tunggu HRP
-        local hrp = character:WaitForChild("HumanoidRootPart", 2)
+        local hrp = character:WaitForChild("HumanoidRootPart", 3)
         if hrp then
-            playerHitboxData[targetPlayer] = createHitBox(character)
+            playerHitboxData[targetPlayer] = createHitBox(character, targetPlayer)
+            
+            -- Tambah Humanoid detection
+            local humanoid = character:FindFirstChild("Humanoid")
+            if humanoid then
+                -- Force hitbox sebagai child dari HumanoidRootPart untuk detection
+                local hitbox = playerHitboxData[targetPlayer].hitbox
+                hitbox.Name = "HumanoidRootPart"  -- ⚠️ TRIK: NAMA SAMA DENGAN HRP!
+                
+                -- Delay sedikit biar weld active
+                task.wait(0.1)
+                
+                -- Set position dan size
+                hitbox.Size = hitboxSize
+                hitbox.Position = hrp.Position
+            end
         end
     end
     
@@ -123,7 +143,7 @@ end
 -- PLAYER JOIN
 Players.PlayerAdded:Connect(function(newPlayer)
     if newPlayer ~= player then
-        task.wait(1)  -- Tunggu player fully join
+        task.wait(1)
         setupPlayerHitbox(newPlayer)
     end
 end)
@@ -145,12 +165,12 @@ startGlobalUpdateLoop()
 -- NOTIFIKASI AKTIF
 notification("Hit Box Activated", Color3.new(1, 1, 1), Color3.new(0, 0, 0), Color3.new(1, 1, 1), 3)
 
--- ERROR HANDLER (JIKA ADA ERROR, TAMPILKAN NOTIF)
+-- ERROR HANDLER
 local function errorHandler(err)
     notification("Hit Box Error", Color3.new(1, 0, 0), Color3.new(0, 0, 0), Color3.new(1, 0, 0), 3)
     warn("Hitbox Error:", err)
 end
 
 xpcall(function()
-    -- Script utama sudah jalan
+    -- Script utama
 end, errorHandler)
