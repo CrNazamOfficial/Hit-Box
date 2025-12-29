@@ -1,0 +1,156 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local hitboxSize = Vector3.new(10, 10, 10)
+local playerHitboxData = {}
+local globalUpdateActive = true
+
+-- NOTIFIKASI
+local function notification(text, textColor, boxColor, borderColor, duration)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = game:GetService("CoreGui")
+
+    local notificationFrame = Instance.new("Frame")
+    notificationFrame.Size = UDim2.new(0, 200, 0, 50)
+    notificationFrame.Position = UDim2.new(0.5, -100, 0.1, 0)
+    notificationFrame.BackgroundColor3 = boxColor
+    notificationFrame.BorderSizePixel = 2
+    notificationFrame.BorderColor3 = borderColor
+    notificationFrame.Parent = screenGui
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.Position = UDim2.new(0, 0, 0, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = textColor
+    textLabel.Text = text
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextSize = 20
+    textLabel.Parent = notificationFrame
+
+    task.spawn(function()
+        task.wait(duration)
+        if screenGui and screenGui.Parent then
+            screenGui:Destroy()
+        end
+    end)
+end
+
+-- GLOBAL UPDATE LOOP
+local function startGlobalUpdateLoop()
+    RunService.Heartbeat:Connect(function()
+        if not globalUpdateActive then return end
+        
+        for targetPlayer, data in pairs(playerHitboxData) do
+            if data and data.hitbox and data.hitbox.Parent then
+                local character = data.character
+                if character and character.Parent then
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        data.hitbox.Position = hrp.Position
+                    else
+                        -- Cleanup jika HRP hilang
+                        if data.hitbox then
+                            data.hitbox:Destroy()
+                        end
+                        playerHitboxData[targetPlayer] = nil
+                    end
+                else
+                    -- Cleanup jika character hilang
+                    if data.hitbox then
+                        data.hitbox:Destroy()
+                    end
+                    playerHitboxData[targetPlayer] = nil
+                end
+            end
+        end
+    end)
+end
+
+-- BUAT HITBOX
+local function createHitBox(character)
+    local hitbox = Instance.new("Part")
+    hitbox.Name = "HitboxPart_" .. character.Name
+    hitbox.Size = hitboxSize
+    hitbox.Anchored = true
+    hitbox.CanCollide = false
+    hitbox.Transparency = 1
+    hitbox.Parent = workspace
+
+    return {hitbox = hitbox, character = character}
+end
+
+-- SETUP PLAYER
+local function setupPlayerHitbox(targetPlayer)
+    if targetPlayer == player then return end
+    
+    local function onCharacterAdded(character)
+        if not character or not character.Parent then return end
+        
+        task.wait(0.2)  -- Tunggu character fully load
+        
+        -- Hapus hitbox lama jika ada
+        if playerHitboxData[targetPlayer] then
+            if playerHitboxData[targetPlayer].hitbox then
+                playerHitboxData[targetPlayer].hitbox:Destroy()
+            end
+            playerHitboxData[targetPlayer] = nil
+        end
+        
+        -- Tunggu HRP
+        local hrp = character:WaitForChild("HumanoidRootPart", 2)
+        if hrp then
+            playerHitboxData[targetPlayer] = createHitBox(character)
+        end
+    end
+    
+    -- Connect events
+    targetPlayer.CharacterAdded:Connect(onCharacterAdded)
+    
+    -- Setup existing character
+    if targetPlayer.Character then
+        onCharacterAdded(targetPlayer.Character)
+    end
+end
+
+-- INITIAL SETUP
+for _, otherPlayer in pairs(Players:GetPlayers()) do
+    if otherPlayer ~= player then
+        setupPlayerHitbox(otherPlayer)
+    end
+end
+
+-- PLAYER JOIN
+Players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer ~= player then
+        task.wait(1)  -- Tunggu player fully join
+        setupPlayerHitbox(newPlayer)
+    end
+end)
+
+-- PLAYER LEAVE
+Players.PlayerRemoving:Connect(function(leavingPlayer)
+    if playerHitboxData[leavingPlayer] then
+        local data = playerHitboxData[leavingPlayer]
+        if data.hitbox and data.hitbox.Parent then
+            data.hitbox:Destroy()
+        end
+        playerHitboxData[leavingPlayer] = nil
+    end
+end)
+
+-- START SYSTEM
+startGlobalUpdateLoop()
+
+-- NOTIFIKASI AKTIF
+notification("Hit Box Activated", Color3.new(1, 1, 1), Color3.new(0, 0, 0), Color3.new(1, 1, 1), 3)
+
+-- ERROR HANDLER (JIKA ADA ERROR, TAMPILKAN NOTIF)
+local function errorHandler(err)
+    notification("Hit Box Error", Color3.new(1, 0, 0), Color3.new(0, 0, 0), Color3.new(1, 0, 0), 3)
+    warn("Hitbox Error:", err)
+end
+
+xpcall(function()
+    -- Script utama sudah jalan
+end, errorHandler)
