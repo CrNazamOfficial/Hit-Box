@@ -1,10 +1,9 @@
 --[[
     ========================================
-    HITBOX EXPANDER - EXPLOIT EDITION
+    HITBOX EXPANDER V3 - FINAL OPTIMIZED
     ========================================
-    Metode: Expand hitbox MUSUH di client
-    Untuk: Synapse X, KRNL, Fluxus, Script-Ware
-    Fungsi: Aim assist - musuh punya hitbox lebih besar
+    Untuk: Executor (Synapse X, KRNL, Fluxus, Script-Ware)
+    Status: TESTED & WORKING
     ========================================
 --]]
 
@@ -12,46 +11,54 @@
 -- KONFIGURASI
 -- =====================================
 local CONFIG = {
-    HitBoxSize = Vector3.new(28, 28, 28),
-    Transparency = 0.7,
-    Color = Color3.fromRGB(255, 0, 0),
-    Material = Enum.Material.ForceField,
+    HitBoxSize = Vector3.new(25, 25, 25),
+    Transparency = 0.6,
+    Color = Color3.fromRGB(255, 50, 50),
     
-    -- Target options
-    TargetTeam = false, -- false = hanya musuh
-    IncludeLocalPlayer = false, -- JANGAN EXPAND DIRI SENDIRI
+    -- Target
+    TargetTeam = false,  -- false = musuh only
+    IncludeLocalPlayer = false,  -- JANGAN expand diri sendiri
     
     -- Visual
     ShowVisual = true,
-    UseBoxHandleAdornment = true -- Lebih stabil untuk exploit
+    
+    -- Performance
+    UpdateRate = 0.1  -- Update setiap 0.1 detik
 }
 
 -- =====================================
--- SERVICES & VARIABLES
+-- SERVICES
 -- =====================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+-- =====================================
+-- VARIABLES
+-- =====================================
 local Enabled = false
 local OriginalSizes = {}
 local Visuals = {}
-local UpdateConnection = nil
+local Connections = {}
+local LastCleanup = tick()
 
 -- =====================================
--- FUNGSI: CEK APAKAH TARGET VALID
+-- UTILITY FUNCTIONS
 -- =====================================
 local function isValidTarget(player)
-    -- Jangan expand diri sendiri
-    if player == LocalPlayer and not CONFIG.IncludeLocalPlayer then
+    if not player or player == LocalPlayer then
         return false
     end
     
-    -- Cek team
+    if not player:IsDescendantOf(Players) then
+        return false
+    end
+    
+    -- Team check
     if not CONFIG.TargetTeam then
         if LocalPlayer.Team and player.Team then
             if LocalPlayer.Team == player.Team then
-                return false -- Skip teammate
+                return false
             end
         end
     end
@@ -60,13 +67,14 @@ local function isValidTarget(player)
 end
 
 -- =====================================
--- FUNGSI: EXPAND SINGLE PART
+-- EXPAND FUNCTIONS
 -- =====================================
 local function expandPart(part)
-    if not part or not part:IsA("BasePart") then return end
+    if not part or not part:IsA("BasePart") then return false end
+    if not part.Parent then return false end
     
     local success = pcall(function()
-        -- Save original if not saved
+        -- Save original
         if not OriginalSizes[part] then
             OriginalSizes[part] = {
                 Size = part.Size,
@@ -76,9 +84,9 @@ local function expandPart(part)
             }
         end
         
-        -- Expand the part
+        -- Expand
         part.Size = CONFIG.HitBoxSize
-        part.Transparency = 1 -- Make invisible
+        part.Transparency = 1
         part.CanCollide = false
         part.Massless = true
     end)
@@ -86,57 +94,30 @@ local function expandPart(part)
     return success
 end
 
--- =====================================
--- FUNGSI: CREATE VISUAL BOX
--- =====================================
-local function createVisualBox(part)
+local function createVisual(part)
     if not CONFIG.ShowVisual or not part then return end
     
     pcall(function()
-        -- Remove old visual
+        -- Remove old
         if Visuals[part] then
             Visuals[part]:Destroy()
         end
         
-        if CONFIG.UseBoxHandleAdornment then
-            -- BoxHandleAdornment (lebih stabil)
-            local box = Instance.new("BoxHandleAdornment")
-            box.Name = "ESP_Hitbox"
-            box.Adornee = part
-            box.Size = CONFIG.HitBoxSize
-            box.Color3 = CONFIG.Color
-            box.Transparency = CONFIG.Transparency
-            box.AlwaysOnTop = true
-            box.ZIndex = 5
-            box.Parent = part
-            Visuals[part] = box
-        else
-            -- Part method (alternative)
-            local visualPart = Instance.new("Part")
-            visualPart.Name = "HitboxVisual"
-            visualPart.Size = CONFIG.HitBoxSize
-            visualPart.Color = CONFIG.Color
-            visualPart.Transparency = CONFIG.Transparency
-            visualPart.Material = CONFIG.Material
-            visualPart.CanCollide = false
-            visualPart.Anchored = false
-            visualPart.Massless = true
-            visualPart.CastShadow = false
-            
-            local weld = Instance.new("WeldConstraint")
-            weld.Part0 = part
-            weld.Part1 = visualPart
-            weld.Parent = visualPart
-            
-            visualPart.Parent = workspace
-            Visuals[part] = visualPart
-        end
+        -- Create new
+        local box = Instance.new("BoxHandleAdornment")
+        box.Name = "HitboxESP"
+        box.Adornee = part
+        box.AlwaysOnTop = true
+        box.ZIndex = 10
+        box.Size = CONFIG.HitBoxSize
+        box.Transparency = CONFIG.Transparency
+        box.Color3 = CONFIG.Color
+        box.Parent = part
+        
+        Visuals[part] = box
     end)
 end
 
--- =====================================
--- FUNGSI: REMOVE VISUAL
--- =====================================
 local function removeVisual(part)
     if Visuals[part] then
         pcall(function()
@@ -146,18 +127,17 @@ local function removeVisual(part)
     end
 end
 
--- =====================================
--- FUNGSI: RESTORE PART
--- =====================================
 local function restorePart(part)
     if not OriginalSizes[part] then return end
     
     pcall(function()
-        local original = OriginalSizes[part]
-        part.Size = original.Size
-        part.Transparency = original.Transparency
-        part.CanCollide = original.CanCollide
-        part.Massless = original.Massless
+        if part and part.Parent then
+            local original = OriginalSizes[part]
+            part.Size = original.Size
+            part.Transparency = original.Transparency
+            part.CanCollide = original.CanCollide
+            part.Massless = original.Massless
+        end
         
         removeVisual(part)
         OriginalSizes[part] = nil
@@ -165,26 +145,19 @@ local function restorePart(part)
 end
 
 -- =====================================
--- FUNGSI: EXPAND CHARACTER
+-- CHARACTER FUNCTIONS
 -- =====================================
 local function expandCharacter(character)
     if not character then return end
     
     task.spawn(function()
-        pcall(function()
-            -- Wait for HumanoidRootPart
-            local hrp = character:WaitForChild("HumanoidRootPart", 5)
-            if hrp then
-                expandPart(hrp)
-                createVisualBox(hrp)
-            end
-        end)
+        local hrp = character:WaitForChild("HumanoidRootPart", 5)
+        if hrp and expandPart(hrp) then
+            createVisual(hrp)
+        end
     end)
 end
 
--- =====================================
--- FUNGSI: RESTORE CHARACTER
--- =====================================
 local function restoreCharacter(character)
     if not character then return end
     
@@ -198,69 +171,100 @@ local function restoreCharacter(character)
 end
 
 -- =====================================
--- FUNGSI: UPDATE ALL CHARACTERS
+-- UPDATE LOOP
 -- =====================================
-local function updateAllCharacters()
+local LastUpdate = 0
+
+local function updateAllHitboxes()
+    if not Enabled then return end
+    
+    local now = tick()
+    if now - LastUpdate < CONFIG.UpdateRate then return end
+    LastUpdate = now
+    
+    -- Update all players
     for _, player in pairs(Players:GetPlayers()) do
         if isValidTarget(player) and player.Character then
             local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
+            
+            if hrp and hrp.Parent then
                 -- Check if needs expansion
                 if hrp.Size ~= CONFIG.HitBoxSize then
                     expandPart(hrp)
                 end
                 
-                -- Check if needs visual
-                if CONFIG.ShowVisual and not Visuals[hrp] then
-                    createVisualBox(hrp)
+                -- Check visual
+                if CONFIG.ShowVisual then
+                    if not Visuals[hrp] or not Visuals[hrp].Parent then
+                        createVisual(hrp)
+                    end
                 end
+            end
+        end
+    end
+    
+    -- Cleanup every 5 seconds
+    if now - LastCleanup > 5 then
+        LastCleanup = now
+        for part, _ in pairs(OriginalSizes) do
+            if not part or not part.Parent then
+                restorePart(part)
             end
         end
     end
 end
 
 -- =====================================
--- FUNGSI: START UPDATE LOOP
--- =====================================
-local function startUpdateLoop()
-    if UpdateConnection then return end
-    
-    UpdateConnection = RunService.Heartbeat:Connect(function()
-        if Enabled then
-            updateAllCharacters()
-        end
-    end)
-end
-
--- =====================================
--- FUNGSI: STOP UPDATE LOOP
--- =====================================
-local function stopUpdateLoop()
-    if UpdateConnection then
-        UpdateConnection:Disconnect()
-        UpdateConnection = nil
-    end
-end
-
--- =====================================
--- FUNGSI: ENABLE HITBOX
+-- CONTROL FUNCTIONS
 -- =====================================
 local function enableHitbox()
-    -- Expand all current players
+    if Enabled then return end
+    Enabled = true
+    
+    -- Expand current players
     for _, player in pairs(Players:GetPlayers()) do
         if isValidTarget(player) and player.Character then
             expandCharacter(player.Character)
         end
     end
     
-    startUpdateLoop()
+    -- Main update loop
+    Connections.Update = RunService.Heartbeat:Connect(updateAllHitboxes)
+    
+    -- Player added
+    Connections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function(character)
+            if Enabled and isValidTarget(player) then
+                task.wait(0.5)
+                expandCharacter(character)
+            end
+        end)
+    end)
+    
+    -- Existing players character added
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            Connections[player.Name] = player.CharacterAdded:Connect(function(character)
+                if Enabled and isValidTarget(player) then
+                    task.wait(0.5)
+                    expandCharacter(character)
+                end
+            end)
+        end
+    end
+    
+    print("✅ Hitbox Expander ENABLED (25x25x25)")
 end
 
--- =====================================
--- FUNGSI: DISABLE HITBOX
--- =====================================
 local function disableHitbox()
-    stopUpdateLoop()
+    if not Enabled then return end
+    Enabled = false
+    
+    -- Disconnect all
+    for _, connection in pairs(Connections) do
+        pcall(function() connection:Disconnect() end)
+    end
+    Connections = {}
     
     -- Restore all
     for _, player in pairs(Players:GetPlayers()) do
@@ -269,108 +273,99 @@ local function disableHitbox()
         end
     end
     
-    -- Clear tables
+    -- Clear
     OriginalSizes = {}
     Visuals = {}
+    
+    print("❌ Hitbox Expander DISABLED")
 end
 
--- =====================================
--- FUNGSI: TOGGLE HITBOX
--- =====================================
 local function toggleHitbox()
-    Enabled = not Enabled
-    
     if Enabled then
-        enableHitbox()
-    else
         disableHitbox()
+    else
+        enableHitbox()
     end
-    
     return Enabled
 end
 
 -- =====================================
--- FUNGSI: CREATE GUI
+-- GUI CREATION
 -- =====================================
 local function createGUI()
     local success = pcall(function()
-        -- Remove existing GUI
+        -- Remove old
         local existing = LocalPlayer.PlayerGui:FindFirstChild("HitboxGUI")
         if existing then existing:Destroy() end
         
-        -- Create ScreenGui
-        local screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "HitboxGUI"
-        screenGui.ResetOnSpawn = false
-        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        -- ScreenGui
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "HitboxGUI"
+        gui.ResetOnSpawn = false
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         
-        -- Main Frame
+        -- Frame
         local frame = Instance.new("Frame")
-        frame.Name = "MainFrame"
-        frame.Size = UDim2.new(0, 250, 0, 150)
+        frame.Size = UDim2.new(0, 220, 0, 110)
         frame.Position = UDim2.new(0, 20, 0, 20)
-        frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
         frame.BorderSizePixel = 0
         frame.Active = true
         frame.Draggable = true
-        frame.Parent = screenGui
+        frame.Parent = gui
         
-        -- Corner
         local corner = Instance.new("UICorner")
         corner.CornerRadius = UDim.new(0, 10)
         corner.Parent = frame
         
-        -- Stroke
         local stroke = Instance.new("UIStroke")
-        stroke.Color = Color3.fromRGB(255, 0, 0)
+        stroke.Color = Color3.fromRGB(255, 50, 50)
         stroke.Thickness = 2
         stroke.Parent = frame
         
         -- Title
         local title = Instance.new("TextLabel")
         title.Size = UDim2.new(1, -20, 0, 30)
-        title.Position = UDim2.new(0, 10, 0, 10)
+        title.Position = UDim2.new(0, 10, 0, 5)
         title.BackgroundTransparency = 1
         title.Text = "🎯 HITBOX EXPANDER"
         title.TextColor3 = Color3.fromRGB(255, 255, 255)
-        title.TextSize = 16
+        title.TextSize = 15
         title.Font = Enum.Font.GothamBold
         title.TextXAlignment = Enum.TextXAlignment.Left
         title.Parent = frame
         
-        -- Info Label
+        -- Info
         local info = Instance.new("TextLabel")
-        info.Name = "InfoLabel"
-        info.Size = UDim2.new(1, -20, 0, 40)
-        info.Position = UDim2.new(0, 10, 0, 45)
+        info.Size = UDim2.new(1, -20, 0, 20)
+        info.Position = UDim2.new(0, 10, 0, 35)
         info.BackgroundTransparency = 1
-        info.Text = "📦 Size: 28x28x28\n🎯 Targets: Enemy Only"
-        info.TextColor3 = Color3.fromRGB(180, 180, 180)
-        info.TextSize = 12
+        info.Text = "📦 Size: 25x25x25 | 🎯 Enemy"
+        info.TextColor3 = Color3.fromRGB(150, 150, 150)
+        info.TextSize = 11
         info.Font = Enum.Font.Gotham
         info.TextXAlignment = Enum.TextXAlignment.Left
-        info.TextYAlignment = Enum.TextYAlignment.Top
         info.Parent = frame
         
         -- Status
         local status = Instance.new("TextLabel")
-        status.Name = "StatusLabel"
+        status.Name = "Status"
         status.Size = UDim2.new(1, -20, 0, 20)
-        status.Position = UDim2.new(0, 10, 0, 90)
+        status.Position = UDim2.new(0, 10, 0, 55)
         status.BackgroundTransparency = 1
         status.Text = "Status: 🔴 DISABLED"
         status.TextColor3 = Color3.fromRGB(255, 100, 100)
-        status.TextSize = 13
+        status.TextSize = 12
         status.Font = Enum.Font.GothamBold
         status.TextXAlignment = Enum.TextXAlignment.Left
         status.Parent = frame
         
-        -- Toggle Button
+        -- Button
         local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0, 210, 0, 35)
-        button.Position = UDim2.new(0.5, 0, 1, -45)
+        button.Size = UDim2.new(0, 180, 0, 35)
+        button.Position = UDim2.new(0.5, 0, 1, -40)
         button.AnchorPoint = Vector2.new(0.5, 0)
-        button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        button.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
         button.Text = "ENABLE"
         button.TextColor3 = Color3.fromRGB(255, 255, 255)
         button.TextSize = 14
@@ -382,93 +377,71 @@ local function createGUI()
         btnCorner.CornerRadius = UDim.new(0, 8)
         btnCorner.Parent = button
         
-        -- Button Click
+        -- Button click
         button.MouseButton1Click:Connect(function()
             local state = toggleHitbox()
             
             if state then
                 button.Text = "DISABLE"
-                button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+                button.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
                 status.Text = "Status: 🟢 ENABLED"
                 status.TextColor3 = Color3.fromRGB(100, 255, 100)
-                stroke.Color = Color3.fromRGB(0, 255, 0)
+                stroke.Color = Color3.fromRGB(50, 255, 50)
             else
                 button.Text = "ENABLE"
-                button.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+                button.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
                 status.Text = "Status: 🔴 DISABLED"
                 status.TextColor3 = Color3.fromRGB(255, 100, 100)
-                stroke.Color = Color3.fromRGB(255, 0, 0)
+                stroke.Color = Color3.fromRGB(255, 50, 50)
             end
         end)
         
-        screenGui.Parent = LocalPlayer.PlayerGui
+        gui.Parent = LocalPlayer.PlayerGui
     end)
     
     return success
 end
 
 -- =====================================
--- EVENT HANDLERS
--- =====================================
-
--- Player added
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        if Enabled and isValidTarget(player) then
-            task.wait(0.5)
-            expandCharacter(character)
-        end
-    end)
-end)
-
--- Handle existing players
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        player.CharacterAdded:Connect(function(character)
-            if Enabled and isValidTarget(player) then
-                task.wait(0.5)
-                expandCharacter(character)
-            end
-        end)
-    end
-end
-
--- =====================================
 -- INITIALIZATION
 -- =====================================
 local function initialize()
-    print("===========================================")
-    print("🎯 HITBOX EXPANDER - EXPLOIT EDITION")
-    print("===========================================")
-    print("✅ Loaded successfully!")
-    print("📌 Method: Client-side hitbox expansion")
-    print("🎯 Target: Enemy players only")
-    print("📦 Size: 28x28x28")
-    print("===========================================")
+    print("========================================")
+    print("🎯 HITBOX EXPANDER V3 - FINAL")
+    print("========================================")
+    print("✅ Script loaded!")
+    print("📦 Size: 25x25x25")
+    print("🎯 Target: Enemy only")
+    print("⚡ Optimized & Tested")
+    print("========================================")
     
-    -- Create GUI
-    local guiSuccess = createGUI()
+    local guiOk = createGUI()
     
-    if guiSuccess then
-        print("✅ GUI created - Click to toggle")
+    if guiOk then
+        print("✅ GUI loaded - Click to toggle")
     else
-        warn("⚠️ GUI failed - Use toggle via console")
-        print("💡 Type: toggleHitbox() to toggle")
+        print("⚠️ GUI failed - Use commands:")
+        print("   _G.HitboxToggle()")
     end
     
-    -- Make toggle function global for console access
-    _G.toggleHitbox = toggleHitbox
+    -- Global commands
+    _G.HitboxEnable = enableHitbox
+    _G.HitboxDisable = disableHitbox
+    _G.HitboxToggle = toggleHitbox
+    _G.HitboxStatus = function() 
+        return Enabled and "🟢 ENABLED" or "🔴 DISABLED" 
+    end
     
-    print("===========================================")
+    print("========================================")
 end
 
--- Run initialization
+-- Run
 initialize()
 
--- Return functions for external control
+-- Return
 return {
-    Toggle = toggleHitbox,
     Enable = enableHitbox,
     Disable = disableHitbox,
+    Toggle = toggleHitbox,
     IsEnabled = function() return Enabled end
 }
