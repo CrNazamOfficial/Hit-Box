@@ -12,7 +12,7 @@
 -- KONFIGURASI
 -- =====================================
 local CONFIG = {
-    HitBoxSize = Vector3.new(10, 10, 10),
+    HitBoxSize = Vector3.new(28, 28, 28),
     Transparency = 0.7,
     Color = Color3.fromRGB(255, 0, 0),
     Material = Enum.Material.ForceField,
@@ -344,7 +344,7 @@ local function createGUI()
         info.Size = UDim2.new(1, -20, 0, 40)
         info.Position = UDim2.new(0, 10, 0, 45)
         info.BackgroundTransparency = 1
-        info.Text = "📦 Size: 10x10x10\n🎯 Targets: Enemy Only"
+        info.Text = "📦 Size: 28x28x28\n🎯 Targets: Enemy Only"
         info.TextColor3 = Color3.fromRGB(180, 180, 180)
         info.TextSize = 12
         info.Font = Enum.Font.Gotham
@@ -443,7 +443,7 @@ local function initialize()
     print("✅ Loaded successfully!")
     print("📌 Method: Client-side hitbox expansion")
     print("🎯 Target: Enemy players only")
-    print("📦 Size: 10x10x10")
+    print("📦 Size: 28x28x28")
     print("===========================================")
     
     -- Create GUI
