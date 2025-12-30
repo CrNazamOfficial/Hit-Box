@@ -1,18 +1,135 @@
 _G.HeadSize = 20
 _G.Disabled = true
- 
+
+-- Fungsi untuk membuat notifikasi
+local function createNotification()
+    -- Buat ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "HitBoxNotification"
+    screenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Buat frame utama
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Name = "Notification"
+    mainFrame.Size = UDim2.new(0, 300, 0, 100)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.15, 0) -- Posisi agak ke atas dari tengah
+    mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Background hitam
+    mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255) -- Pinggir putih
+    mainFrame.BorderSizePixel = 3
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0)
+    mainFrame.Parent = screenGui
+    
+    -- Tambahkan corner radius untuk tampilan yang tidak terlalu klasik
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = mainFrame
+    
+    -- Tambahkan gradient untuk efek yang lebih menarik
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+    })
+    gradient.Rotation = 90
+    gradient.Parent = mainFrame
+    
+    -- Teks utama
+    local mainText = Instance.new("TextLabel")
+    mainText.Name = "MainText"
+    mainText.Size = UDim2.new(1, 0, 0.6, 0)
+    mainText.Position = UDim2.new(0, 0, 0.1, 0)
+    mainText.BackgroundTransparency = 1
+    mainText.Text = "Hit Box : Activated"
+    mainText.TextColor3 = Color3.fromRGB(255, 255, 255) -- Teks putih
+    mainText.Font = Enum.Font.GothamBold
+    mainText.TextSize = 24
+    mainText.Parent = mainFrame
+    
+    -- Garis pemisah
+    local line = Instance.new("Frame")
+    line.Name = "Divider"
+    line.Size = UDim2.new(0.8, 0, 0, 2)
+    line.Position = UDim2.new(0.1, 0, 0.6, 0)
+    line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    line.BorderSizePixel = 0
+    line.Parent = mainFrame
+    
+    -- Teks credit
+    local creditText = Instance.new("TextLabel")
+    creditText.Name = "CreditText"
+    creditText.Size = UDim2.new(1, 0, 0.3, 0)
+    creditText.Position = UDim2.new(0, 0, 0.65, 0)
+    creditText.BackgroundTransparency = 1
+    creditText.Text = "By : Nazam"
+    creditText.TextColor3 = Color3.fromRGB(255, 255, 255) -- Teks putih
+    creditText.Font = Enum.Font.Gotham
+    creditText.TextSize = 18
+    creditText.Parent = mainFrame
+    
+    -- Animasi muncul (fade in + slide)
+    mainFrame.BackgroundTransparency = 1
+    mainFrame.Position = UDim2.new(0.5, -150, 0.1, -50) -- Mulai dari posisi yang lebih tinggi
+    
+    -- Animasi fade in
+    local fadeIn = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 0}
+    )
+    
+    -- Animasi slide down ke posisi final
+    local slideDown = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.3),
+        {Position = UDim2.new(0.5, -150, 0.15, 0)} -- Posisi final: 15% dari atas layar
+    )
+    
+    -- Jalankan animasi
+    fadeIn:Play()
+    slideDown:Play()
+    
+    -- Tunggu beberapa detik lalu hilangkan dengan animasi
+    wait(3)
+    
+    -- Animasi fade out
+    local fadeOut = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {BackgroundTransparency = 1}
+    )
+    
+    -- Animasi slide up sedikit
+    local slideUp = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Position = UDim2.new(0.5, -150, 0.1, 0)}
+    )
+    
+    fadeOut:Play()
+    slideUp:Play()
+    
+    -- Hapus GUI setelah animasi selesai
+    fadeOut.Completed:Connect(function()
+        screenGui:Destroy()
+    end)
+end
+
+-- Panggil notifikasi saat script dijalankan
+createNotification()
+
 game:GetService('RunService').RenderStepped:connect(function()
-if _G.Disabled then
-for i,v in next, game:GetService('Players'):GetPlayers() do
-if v.Name ~= game:GetService('Players').LocalPlayer.Name then
-pcall(function()
-v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
-v.Character.HumanoidRootPart.Transparency = 0.7
-v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really blue")
-v.Character.HumanoidRootPart.Material = "Neon"
-v.Character.HumanoidRootPart.CanCollide = false
-end)
-end
-end
-end
+    if _G.Disabled then
+        for i,v in next, game:GetService('Players'):GetPlayers() do
+            if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+                pcall(function()
+                    v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize,_G.HeadSize,_G.HeadSize)
+                    v.Character.HumanoidRootPart.Transparency = 1
+                    v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really blue")
+                    v.Character.HumanoidRootPart.Material = "Neon"
+                    v.Character.HumanoidRootPart.CanCollide = false
+                end)
+            end
+        end
+    end
 end)
