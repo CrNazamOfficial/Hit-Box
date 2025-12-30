@@ -113,7 +113,7 @@ local function createMainGUI()
     local iconButton = Instance.new("ImageButton")
     iconButton.Name = "MinimizedIcon"
     iconButton.Size = UDim2.new(0, 50, 0, 50)
-    iconButton.Position = UDim2.new(0, 20, 0.5, -25)
+    iconButton.Position = UDim2.new(0, 20, 0, 20)
     iconButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     iconButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
     iconButton.BorderSizePixel = 2
@@ -156,13 +156,20 @@ local function createMainGUI()
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, 350, 0, 400)
-    mainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
+    mainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
     mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
     mainFrame.BorderSizePixel = 3
     mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
     mainFrame.Visible = true
     mainFrame.Parent = mainGui
+    
+    local dragFrame = Instance.new("Frame")
+dragFrame.Name = "DragFrame"
+dragFrame.Size = UDim2.new(1, 0, 0, 40)
+dragFrame.Position = UDim2.new(0, 0, 0, 0)
+dragFrame.BackgroundTransparency = 1
+dragFrame.Parent = mainFrame
     
     local mainCorner = Instance.new("UICorner")
     mainCorner.CornerRadius = UDim.new(0, 12)
@@ -173,7 +180,7 @@ local function createMainGUI()
     header.Size = UDim2.new(1, 0, 0, 40)
     header.Position = UDim2.new(0, 0, 0, 0)
     header.BackgroundTransparency = 1
-    header.Parent = mainFrame
+    header.Parent = dragFrame
     
     local title = Instance.new("TextLabel")
     title.Name = "Title"
@@ -487,7 +494,7 @@ local function createMainGUI()
         mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
     
-    mainFrame.InputBegan:Connect(function(input)
+    dragFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
@@ -501,7 +508,7 @@ local function createMainGUI()
         end
     end)
     
-    mainFrame.InputChanged:Connect(function(input)
+    dragFrame.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
             dragInput = input
         end
