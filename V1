@@ -156,7 +156,7 @@ local function createMainGUI()
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, 350, 0, 400)
-    mainFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+    mainFrame.Position = UDim2.new(0.5, -175, 0.3, 0)
     mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
     mainFrame.BorderSizePixel = 3
@@ -164,12 +164,12 @@ local function createMainGUI()
     mainFrame.Visible = true
     mainFrame.Parent = mainGui
     
-    local dragFrame = Instance.new("Frame")
-dragFrame.Name = "DragFrame"
-dragFrame.Size = UDim2.new(1, 0, 0, 40)
-dragFrame.Position = UDim2.new(0, 0, 0, 0)
-dragFrame.BackgroundTransparency = 1
-dragFrame.Parent = mainFrame
+    local dragCover = Instance.new("Frame")
+    dragCover.Name = "DragCover"
+    dragCover.Size = UDim2.new(1, 0, 1, 0)
+    dragCover.Position = UDim2.new(0, 0, 0, 0)
+    dragCover.BackgroundTransparency = 1
+    dragCover.Parent = mainFrame
     
     local mainCorner = Instance.new("UICorner")
     mainCorner.CornerRadius = UDim.new(0, 12)
@@ -180,7 +180,7 @@ dragFrame.Parent = mainFrame
     header.Size = UDim2.new(1, 0, 0, 40)
     header.Position = UDim2.new(0, 0, 0, 0)
     header.BackgroundTransparency = 1
-    header.Parent = dragFrame
+    header.Parent = mainFrame
     
     local title = Instance.new("TextLabel")
     title.Name = "Title"
@@ -494,7 +494,7 @@ dragFrame.Parent = mainFrame
         mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
     
-    dragFrame.InputBegan:Connect(function(input)
+    dragCover.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
@@ -508,7 +508,7 @@ dragFrame.Parent = mainFrame
         end
     end)
     
-    dragFrame.InputChanged:Connect(function(input)
+    dragCover.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
             dragInput = input
         end
