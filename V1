@@ -3,7 +3,6 @@ _G.HeadSize = 37
 _G.Disabled = true
 _G.FriendList = {}
 _G.MaxFriends = 10
-_G.ESPEnabled = true
 
 local function getPlayerByName(name)
     for _, player in pairs(game:GetService("Players"):GetPlayers()) do
@@ -13,171 +12,6 @@ local function getPlayerByName(name)
         end
     end
     return nil
-end
-
-local espStorage = {}
-
-local function createESP(player)
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-        return
-    end
-    
-    local isFriend = false
-    for _, friendName in ipairs(_G.FriendList) do
-        if string.lower(player.Name) == string.lower(friendName) or
-           (player.DisplayName and string.lower(player.DisplayName) == string.lower(friendName)) then
-            isFriend = true
-            break
-        end
-    end
-    
-    if isFriend then
-        return
-    end
-    
-    if espStorage[player.Name] then
-        return
-    end
-    
-    local char = player.Character
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChild("Humanoid")
-    
-    if not hrp or not humanoid then
-        return
-    end
-    
-    local espFolder = Instance.new("Folder")
-    espFolder.Name = "ESP_" .. player.Name
-    espFolder.Parent = char
-    
-    local function createLine(name, attachment0Name, attachment1Name)
-        local line = Instance.new("LineHandleAdornment")
-        line.Name = name
-        line.Color3 = Color3.fromRGB(255, 255, 255)
-        line.Thickness = 2
-        line.Transparency = 0
-        line.ZIndex = 1
-        line.AlwaysOnTop = true
-        line.Adornee = hrp
-        
-        local att0 = char:FindFirstChild(attachment0Name, true)
-        local att1 = char:FindFirstChild(attachment1Name, true)
-        
-        if att0 and att1 then
-            line.Attachment0 = att0
-            line.Attachment1 = att1
-        end
-        
-        line.Parent = espFolder
-        return line
-    end
-    
-    local head = char:FindFirstChild("Head")
-    local leftArm = char:FindFirstChild("Left Arm") or char:FindFirstChild("LeftUpperArm")
-    local rightArm = char:FindFirstChild("Right Arm") or char:FindFirstChild("RightUpperArm")
-    local leftLeg = char:FindFirstChild("Left Leg") or char:FindFirstChild("LeftUpperLeg")
-    local rightLeg = char:FindFirstChild("Right Leg") or char:FindFirstChild("RightUpperLeg")
-    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-    
-    if head and torso then
-        local headAtt = Instance.new("Attachment", head)
-        headAtt.Name = "HeadAtt"
-        headAtt.Position = Vector3.new(0, 0, 0)
-        
-        local torsoAtt = Instance.new("Attachment", torso)
-        torsoAtt.Name = "TorsoTopAtt"
-        torsoAtt.Position = Vector3.new(0, 1, 0)
-        
-        createLine("HeadToTorso", "HeadAtt", "TorsoTopAtt")
-    end
-    
-    if torso then
-        local torsoTop = Instance.new("Attachment", torso)
-        torsoTop.Name = "TorsoTop"
-        torsoTop.Position = Vector3.new(0, 1, 0)
-        
-        local torsoBottom = Instance.new("Attachment", torso)
-        torsoBottom.Name = "TorsoBottom"
-        torsoBottom.Position = Vector3.new(0, -1, 0)
-        
-        createLine("TorsoLine", "TorsoTop", "TorsoBottom")
-    end
-    
-    if torso and leftArm then
-        local torsoLeft = Instance.new("Attachment", torso)
-        torsoLeft.Name = "TorsoLeft"
-        torsoLeft.Position = Vector3.new(-1, 0.5, 0)
-        
-        local leftArmAtt = Instance.new("Attachment", leftArm)
-        leftArmAtt.Name = "LeftArmAtt"
-        leftArmAtt.Position = Vector3.new(0, 0.5, 0)
-        
-        createLine("LeftArmLine", "TorsoLeft", "LeftArmAtt")
-    end
-    
-    if torso and rightArm then
-        local torsoRight = Instance.new("Attachment", torso)
-        torsoRight.Name = "TorsoRight"
-        torsoRight.Position = Vector3.new(1, 0.5, 0)
-        
-        local rightArmAtt = Instance.new("Attachment", rightArm)
-        rightArmAtt.Name = "RightArmAtt"
-        rightArmAtt.Position = Vector3.new(0, 0.5, 0)
-        
-        createLine("RightArmLine", "TorsoRight", "RightArmAtt")
-    end
-    
-    if torso and leftLeg then
-        local torsoBottomLeft = Instance.new("Attachment", torso)
-        torsoBottomLeft.Name = "TorsoBottomLeft"
-        torsoBottomLeft.Position = Vector3.new(-0.5, -1, 0)
-        
-        local leftLegAtt = Instance.new("Attachment", leftLeg)
-        leftLegAtt.Name = "LeftLegAtt"
-        leftLegAtt.Position = Vector3.new(0, 0.5, 0)
-        
-        createLine("LeftLegLine", "TorsoBottomLeft", "LeftLegAtt")
-    end
-    
-    if torso and rightLeg then
-        local torsoBottomRight = Instance.new("Attachment", torso)
-        torsoBottomRight.Name = "TorsoBottomRight"
-        torsoBottomRight.Position = Vector3.new(0.5, -1, 0)
-        
-        local rightLegAtt = Instance.new("Attachment", rightLeg)
-        rightLegAtt.Name = "RightLegAtt"
-        rightLegAtt.Position = Vector3.new(0, 0.5, 0)
-        
-        createLine("RightLegLine", "TorsoBottomRight", "RightLegAtt")
-    end
-    
-    espStorage[player.Name] = espFolder
-end
-
-local function removeESP(player)
-    if espStorage[player.Name] then
-        espStorage[player.Name]:Destroy()
-        espStorage[player.Name] = nil
-    end
-    
-    if player.Character then
-        local existingESP = player.Character:FindFirstChild("ESP_" .. player.Name)
-        if existingESP then
-            existingESP:Destroy()
-        end
-    end
-end
-
-local function updateAllESP()
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-        if player ~= game:GetService("Players").LocalPlayer then
-            removeESP(player)
-            if _G.ESPEnabled then
-                createESP(player)
-            end
-        end
-    end
 end
 
 local function createNotification()
@@ -277,9 +111,10 @@ local function createMainGUI()
     mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     mainGui.ResetOnSpawn = false
     
+    -- ===== MINIMIZE ICON (IMPROVED DRAG) =====
     local iconButton = Instance.new("ImageButton")
     iconButton.Name = "MinimizedIcon"
-    iconButton.Size = UDim2.new(0, 45, 0, 45)
+    iconButton.Size = UDim2.new(0, 50, 0, 50)
     iconButton.Position = UDim2.new(0, 20, 0, 20)
     iconButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     iconButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
@@ -296,15 +131,15 @@ local function createMainGUI()
     
     local iconTooltip = Instance.new("TextLabel")
     iconTooltip.Name = "Tooltip"
-    iconTooltip.Size = UDim2.new(0, 90, 0, 25)
-    iconTooltip.Position = UDim2.new(0, 50, 0, 10)
+    iconTooltip.Size = UDim2.new(0, 100, 0, 30)
+    iconTooltip.Position = UDim2.new(0, 55, 0, 10)
     iconTooltip.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     iconTooltip.BorderColor3 = Color3.fromRGB(255, 255, 255)
     iconTooltip.BorderSizePixel = 1
-    iconTooltip.Text = "Open Menu"
+    iconTooltip.Text = "Open HitBox Menu"
     iconTooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
     iconTooltip.Font = Enum.Font.Gotham
-    iconTooltip.TextSize = 11
+    iconTooltip.TextSize = 12
     iconTooltip.Visible = false
     iconTooltip.Parent = iconButton
     
@@ -322,25 +157,27 @@ local function createMainGUI()
         iconButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     end)
     
+    -- ===== MAIN FRAME =====
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2.new(0, 320, 0, 380)
-    mainFrame.Position = UDim2.new(0.5, -160, 0.5, -190)
+    mainFrame.Size = UDim2.new(0, 350, 0, 400)
+    mainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
     mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    mainFrame.BorderSizePixel = 2
+    mainFrame.BorderSizePixel = 3
     mainFrame.Active = true
     mainFrame.Draggable = false
     mainFrame.Visible = true
     mainFrame.Parent = mainGui
     
     local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 10)
+    mainCorner.CornerRadius = UDim.new(0, 12)
     mainCorner.Parent = mainFrame
     
+    -- ===== DRAG HANDLE (untuk main frame) =====
     local dragHandle = Instance.new("Frame")
     dragHandle.Name = "DragHandle"
-    dragHandle.Size = UDim2.new(1, 0, 0, 35)
+    dragHandle.Size = UDim2.new(1, 0, 0, 40)
     dragHandle.Position = UDim2.new(0, 0, 0, 0)
     dragHandle.BackgroundTransparency = 1
     dragHandle.Active = true
@@ -348,7 +185,7 @@ local function createMainGUI()
     
     local header = Instance.new("Frame")
     header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 35)
+    header.Size = UDim2.new(1, 0, 0, 40)
     header.Position = UDim2.new(0, 0, 0, 0)
     header.BackgroundTransparency = 1
     header.Parent = mainFrame
@@ -358,28 +195,28 @@ local function createMainGUI()
     title.Size = UDim2.new(0.7, 0, 1, 0)
     title.Position = UDim2.new(0, 10, 0, 0)
     title.BackgroundTransparency = 1
-    title.Text = "HITBOX FRIEND LIST"
+    title.Text = "HIT BOX FRIEND LIST"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.Font = Enum.Font.GothamBold
-    title.TextSize = 16
+    title.TextSize = 20
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = header
     
     local closeButton = Instance.new("TextButton")
     closeButton.Name = "CloseButton"
-    closeButton.Size = UDim2.new(0, 25, 0, 25)
-    closeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
+    closeButton.Position = UDim2.new(1, -35, 0.5, -15)
     closeButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     closeButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
     closeButton.BorderSizePixel = 2
     closeButton.Text = "X"
     closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = 14
+    closeButton.TextSize = 18
     closeButton.Parent = header
     
     local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 5)
+    closeCorner.CornerRadius = UDim.new(0, 6)
     closeCorner.Parent = closeButton
     
     closeButton.MouseEnter:Connect(function()
@@ -392,54 +229,54 @@ local function createMainGUI()
     
     local headerLine = Instance.new("Frame")
     headerLine.Name = "HeaderLine"
-    headerLine.Size = UDim2.new(0.92, 0, 0, 1)
-    headerLine.Position = UDim2.new(0.04, 0, 0, 36)
+    headerLine.Size = UDim2.new(0.9, 0, 0, 2)
+    headerLine.Position = UDim2.new(0.05, 0, 0, 40)
     headerLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     headerLine.BorderSizePixel = 0
     headerLine.Parent = mainFrame
     
     local inputFrame = Instance.new("Frame")
     inputFrame.Name = "InputFrame"
-    inputFrame.Size = UDim2.new(0.92, 0, 0, 42)
-    inputFrame.Position = UDim2.new(0.04, 0, 0, 45)
+    inputFrame.Size = UDim2.new(0.9, 0, 0, 50)
+    inputFrame.Position = UDim2.new(0.05, 0, 0, 55)
     inputFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    inputFrame.BorderColor3 = Color3.fromRGB(80, 80, 80)
+    inputFrame.BorderColor3 = Color3.fromRGB(100, 100, 100)
     inputFrame.BorderSizePixel = 1
     inputFrame.Parent = mainFrame
     
     local inputCorner = Instance.new("UICorner")
-    inputCorner.CornerRadius = UDim.new(0, 5)
+    inputCorner.CornerRadius = UDim.new(0, 6)
     inputCorner.Parent = inputFrame
-
+    
     local nicknameBox = Instance.new("TextBox")
     nicknameBox.Name = "NicknameBox"
-    nicknameBox.Size = UDim2.new(0.68, 0, 0.75, 0)
-    nicknameBox.Position = UDim2.new(0.02, 0, 0.125, 0)
+    nicknameBox.Size = UDim2.new(0.7, 0, 0.8, 0)
+    nicknameBox.Position = UDim2.new(0.02, 0, 0.1, 0)
     nicknameBox.BackgroundTransparency = 1
     nicknameBox.Text = ""
-    nicknameBox.PlaceholderText = "Enter Nickname..."
-    nicknameBox.PlaceholderColor3 = Color3.fromRGB(130, 130, 130)
+    nicknameBox.PlaceholderText = "Enter Nickname or Display Name..."
+    nicknameBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
     nicknameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     nicknameBox.Font = Enum.Font.Gotham
-    nicknameBox.TextSize = 13
+    nicknameBox.TextSize = 16
     nicknameBox.TextXAlignment = Enum.TextXAlignment.Left
     nicknameBox.Parent = inputFrame
     
     local addButton = Instance.new("TextButton")
     addButton.Name = "AddButton"
-    addButton.Size = UDim2.new(0.28, 0, 0.75, 0)
-    addButton.Position = UDim2.new(0.7, 0, 0.125, 0)
+    addButton.Size = UDim2.new(0.25, 0, 0.8, 0)
+    addButton.Position = UDim2.new(0.73, 0, 0.1, 0)
     addButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     addButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
-    addButton.BorderSizePixel = 1
+    addButton.BorderSizePixel = 2
     addButton.Text = "ADD"
     addButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     addButton.Font = Enum.Font.GothamBold
-    addButton.TextSize = 13
+    addButton.TextSize = 16
     addButton.Parent = inputFrame
     
     local addCorner = Instance.new("UICorner")
-    addCorner.CornerRadius = UDim.new(0, 5)
+    addCorner.CornerRadius = UDim.new(0, 6)
     addCorner.Parent = addButton
     
     addButton.MouseEnter:Connect(function()
@@ -452,28 +289,28 @@ local function createMainGUI()
     
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Name = "StatusLabel"
-    statusLabel.Size = UDim2.new(0.92, 0, 0, 25)
-    statusLabel.Position = UDim2.new(0.04, 0, 0, 95)
+    statusLabel.Size = UDim2.new(0.9, 0, 0, 30)
+    statusLabel.Position = UDim2.new(0.05, 0, 0, 115)
     statusLabel.BackgroundTransparency = 1
     statusLabel.Text = "Max Friends: 10 | Current: 0"
-    statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     statusLabel.Font = Enum.Font.Gotham
-    statusLabel.TextSize = 12
+    statusLabel.TextSize = 14
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
     statusLabel.Parent = mainFrame
     
     local listLine = Instance.new("Frame")
     listLine.Name = "ListLine"
-    listLine.Size = UDim2.new(0.92, 0, 0, 1)
-    listLine.Position = UDim2.new(0.04, 0, 0, 125)
+    listLine.Size = UDim2.new(0.9, 0, 0, 2)
+    listLine.Position = UDim2.new(0.05, 0, 0, 150)
     listLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     listLine.BorderSizePixel = 0
     listLine.Parent = mainFrame
     
     local friendsFrame = Instance.new("Frame")
     friendsFrame.Name = "FriendsFrame"
-    friendsFrame.Size = UDim2.new(0.92, 0, 0, 220)
-    friendsFrame.Position = UDim2.new(0.04, 0, 0, 133)
+    friendsFrame.Size = UDim2.new(0.9, 0, 0, 200)
+    friendsFrame.Position = UDim2.new(0.05, 0, 0, 160)
     friendsFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     friendsFrame.BorderColor3 = Color3.fromRGB(50, 50, 50)
     friendsFrame.BorderSizePixel = 1
@@ -481,7 +318,7 @@ local function createMainGUI()
     friendsFrame.Parent = mainFrame
     
     local friendsCorner = Instance.new("UICorner")
-    friendsCorner.CornerRadius = UDim.new(0, 5)
+    friendsCorner.CornerRadius = UDim.new(0, 6)
     friendsCorner.Parent = friendsFrame
     
     local scrollFrame = Instance.new("ScrollingFrame")
@@ -490,25 +327,25 @@ local function createMainGUI()
     scrollFrame.Position = UDim2.new(0, 0, 0, 0)
     scrollFrame.BackgroundTransparency = 1
     scrollFrame.BorderSizePixel = 0
-    scrollFrame.ScrollBarThickness = 5
+    scrollFrame.ScrollBarThickness = 6
     scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
     scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     scrollFrame.Parent = friendsFrame
     
     local listLayout = Instance.new("UIListLayout")
     listLayout.Name = "ListLayout"
-    listLayout.Padding = UDim.new(0, 4)
+    listLayout.Padding = UDim.new(0, 5)
     listLayout.Parent = scrollFrame
     
     local creditLabel = Instance.new("TextLabel")
     creditLabel.Name = "CreditLabel"
-    creditLabel.Size = UDim2.new(1, 0, 0, 22)
-    creditLabel.Position = UDim2.new(0, 0, 1, -22)
+    creditLabel.Size = UDim2.new(1, 0, 0, 30)
+    creditLabel.Position = UDim2.new(0, 0, 1, -30)
     creditLabel.BackgroundTransparency = 1
-    creditLabel.Text = "By: Nazam"
-    creditLabel.TextColor3 = Color3.fromRGB(130, 130, 130)
+    creditLabel.Text = "Hit Box System - By: Nazam"
+    creditLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
     creditLabel.Font = Enum.Font.Gotham
-    creditLabel.TextSize = 11
+    creditLabel.TextSize = 14
     creditLabel.Parent = mainFrame
     
     local function updateStatusLabel()
@@ -518,13 +355,13 @@ local function createMainGUI()
         if friendCount >= _G.MaxFriends then
             statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         else
-            statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+            statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         end
     end
     
     local function addFriendToList(name)
         if #_G.FriendList >= _G.MaxFriends then
-            nicknameBox.Text = "MAX FRIENDS!"
+            nicknameBox.Text = "MAX FRIENDS REACHED!"
             nicknameBox.TextColor3 = Color3.fromRGB(255, 50, 50)
             wait(1)
             nicknameBox.Text = ""
@@ -534,7 +371,7 @@ local function createMainGUI()
         
         for _, friendName in ipairs(_G.FriendList) do
             if string.lower(friendName) == string.lower(name) then
-                nicknameBox.Text = "ALREADY ADDED!"
+                nicknameBox.Text = "ALREADY IN LIST!"
                 nicknameBox.TextColor3 = Color3.fromRGB(255, 50, 50)
                 wait(1)
                 nicknameBox.Text = ""
@@ -544,46 +381,45 @@ local function createMainGUI()
         end
         
         table.insert(_G.FriendList, name)
-        updateAllESP()
         
         local friendEntry = Instance.new("Frame")
         friendEntry.Name = "FriendEntry_" .. name
-        friendEntry.Size = UDim2.new(1, -8, 0, 35)
+        friendEntry.Size = UDim2.new(1, -10, 0, 40)
         friendEntry.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
         friendEntry.BorderColor3 = Color3.fromRGB(50, 50, 50)
         friendEntry.BorderSizePixel = 1
         
         local entryCorner = Instance.new("UICorner")
-        entryCorner.CornerRadius = UDim.new(0, 5)
+        entryCorner.CornerRadius = UDim.new(0, 6)
         entryCorner.Parent = friendEntry
         
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Name = "NameLabel"
-        nameLabel.Size = UDim2.new(0.75, 0, 1, 0)
-        nameLabel.Position = UDim2.new(0, 8, 0, 0)
+        nameLabel.Size = UDim2.new(0.8, 0, 1, 0)
+        nameLabel.Position = UDim2.new(0, 10, 0, 0)
         nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = name
+        nameLabel.Text = "Friend: " .. name
         nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         nameLabel.Font = Enum.Font.Gotham
-        nameLabel.TextSize = 13
+        nameLabel.TextSize = 16
         nameLabel.TextXAlignment = Enum.TextXAlignment.Left
         nameLabel.Parent = friendEntry
         
         local removeButton = Instance.new("TextButton")
         removeButton.Name = "RemoveButton"
-        removeButton.Size = UDim2.new(0, 25, 0, 25)
-        removeButton.Position = UDim2.new(1, -30, 0.5, -12.5)
+        removeButton.Size = UDim2.new(0, 30, 0, 30)
+        removeButton.Position = UDim2.new(1, -35, 0.5, -15)
         removeButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         removeButton.BorderColor3 = Color3.fromRGB(255, 50, 50)
-        removeButton.BorderSizePixel = 1
+        removeButton.BorderSizePixel = 2
         removeButton.Text = "X"
         removeButton.TextColor3 = Color3.fromRGB(255, 50, 50)
         removeButton.Font = Enum.Font.GothamBold
-        removeButton.TextSize = 12
+        removeButton.TextSize = 14
         removeButton.Parent = friendEntry
         
         local removeCorner = Instance.new("UICorner")
-        removeCorner.CornerRadius = UDim.new(0, 5)
+        removeCorner.CornerRadius = UDim.new(0, 6)
         removeCorner.Parent = removeButton
         
         removeButton.MouseButton1Click:Connect(function()
@@ -594,7 +430,6 @@ local function createMainGUI()
                 end
             end
             
-            updateAllESP()
             friendEntry:Destroy()
             updateStatusLabel()
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
@@ -659,7 +494,10 @@ local function createMainGUI()
             isMinimized = false
         end
     end)
-
+    
+    -- ========================================
+    -- PERFECT DRAG SYSTEM FOR MAIN FRAME
+    -- ========================================
     local UIS = game:GetService("UserInputService")
     local dragging = false
     local dragStart = nil
@@ -691,6 +529,9 @@ local function createMainGUI()
         end
     end)
     
+    -- ========================================
+    -- PERFECT DRAG SYSTEM FOR ICON
+    -- ========================================
     local iconDragging = false
     local iconDragStart = nil
     local iconStartPos = nil
@@ -708,6 +549,7 @@ local function createMainGUI()
                 if input.UserInputState == Enum.UserInputState.End then
                     iconDragging = false
                     
+                    -- Jika tidak di-drag (hanya click), buka menu
                     if not iconDragMoved and isMinimized then
                         mainFrame.Visible = true
                         iconButton.Visible = false
@@ -722,6 +564,7 @@ local function createMainGUI()
         if iconDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - iconDragStart
             
+            -- Check if moved beyond threshold
             if math.abs(delta.X) > dragThreshold or math.abs(delta.Y) > dragThreshold then
                 iconDragMoved = true
             end
@@ -775,41 +618,8 @@ game:GetService('RunService').RenderStepped:connect(function()
     end
 end)
 
-game:GetService("Players").PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        wait(0.5)
-        if _G.ESPEnabled then
-            createESP(player)
-        end
-    end)
-end)
-
-game:GetService("Players").PlayerRemoving:Connect(function(player)
-    removeESP(player)
-end)
-
-for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-    if player ~= game:GetService("Players").LocalPlayer then
-        if player.Character then
-            createESP(player)
-        end
-        
-        player.CharacterAdded:Connect(function(character)
-            wait(0.5)
-            if _G.ESPEnabled then
-                createESP(player)
-            end
-        end)
-        
-        player.CharacterRemoving:Connect(function()
-            removeESP(player)
-        end)
-    end
-end
-
 createNotification()
 createMainGUI()
 
 print("Hit Box System Loaded!")
-print("ESP System Active!")
 print("By: Nazam")
