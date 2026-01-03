@@ -1,4 +1,3 @@
-
 _G.HeadSize = 20
 _G.Disabled = true
 _G.FriendList = {}
@@ -12,37 +11,6 @@ local function getPlayerByName(name)
         end
     end
     return nil
-end
-
-local function removeHitbox(character)
-    if character:FindFirstChild("CustomHitbox") then
-        character.CustomHitbox:Destroy()
-    end
-    if character:FindFirstChild("HumanoidRootPart") then
-        character.HumanoidRootPart.Size = Vector3.new(2, 2, 1)
-        character.HumanoidRootPart.Transparency = 1
-    end
-end
-
-local function createHitbox(character)
-    if not character:FindFirstChild("HumanoidRootPart") then return end
-    if character:FindFirstChild("CustomHitbox") then return end
-    
-    local hitboxPart = Instance.new("Part")
-    hitboxPart.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
-    hitboxPart.Transparency = 1
-    hitboxPart.CanCollide = false
-    hitboxPart.Anchored = false
-    hitboxPart.Name = "CustomHitbox"
-    hitboxPart.BrickColor = BrickColor.new("Really blue")
-    hitboxPart.Material = Enum.Material.Neon
-    
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = character.HumanoidRootPart
-    weld.Part1 = hitboxPart
-    weld.Parent = hitboxPart
-    
-    hitboxPart.Parent = character
 end
 
 local function createNotification()
@@ -98,16 +66,34 @@ local function createNotification()
     mainFrame.BackgroundTransparency = 1
     mainFrame.Position = UDim2.new(0.5, -150, 0.1, -50)
     
-    local fadeIn = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0})
-    local slideDown = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.3), {Position = UDim2.new(0.5, -150, 0.15, 0)})
+    local fadeIn = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 0}
+    )
+    
+    local slideDown = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.3),
+        {Position = UDim2.new(0.5, -150, 0.15, 0)}
+    )
     
     fadeIn:Play()
     slideDown:Play()
     
     wait(3)
     
-    local fadeOut = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1})
-    local slideUp = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(0.5, -150, 0.1, 0)})
+    local fadeOut = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {BackgroundTransparency = 1}
+    )
+    
+    local slideUp = game:GetService("TweenService"):Create(
+        mainFrame,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+        {Position = UDim2.new(0.5, -150, 0.1, 0)}
+    )
     
     fadeOut:Play()
     slideUp:Play()
@@ -124,6 +110,7 @@ local function createMainGUI()
     mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     mainGui.ResetOnSpawn = false
     
+    -- ===== MINIMIZE ICON (IMPROVED DRAG) =====
     local iconButton = Instance.new("ImageButton")
     iconButton.Name = "MinimizedIcon"
     iconButton.Size = UDim2.new(0, 50, 0, 50)
@@ -169,6 +156,7 @@ local function createMainGUI()
         iconButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     end)
     
+    -- ===== MAIN FRAME =====
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, 350, 0, 400)
@@ -185,6 +173,7 @@ local function createMainGUI()
     mainCorner.CornerRadius = UDim.new(0, 12)
     mainCorner.Parent = mainFrame
     
+    -- ===== DRAG HANDLE (untuk main frame) =====
     local dragHandle = Instance.new("Frame")
     dragHandle.Name = "DragHandle"
     dragHandle.Size = UDim2.new(1, 0, 0, 40)
@@ -271,7 +260,7 @@ local function createMainGUI()
     nicknameBox.TextSize = 16
     nicknameBox.TextXAlignment = Enum.TextXAlignment.Left
     nicknameBox.Parent = inputFrame
-
+    
     local addButton = Instance.new("TextButton")
     addButton.Name = "AddButton"
     addButton.Size = UDim2.new(0.25, 0, 0.8, 0)
@@ -361,6 +350,7 @@ local function createMainGUI()
     local function updateStatusLabel()
         local friendCount = #_G.FriendList
         statusLabel.Text = string.format("Max Friends: 10 | Current: %d", friendCount)
+        
         if friendCount >= _G.MaxFriends then
             statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         else
@@ -438,6 +428,7 @@ local function createMainGUI()
                     break
                 end
             end
+            
             friendEntry:Destroy()
             updateStatusLabel()
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
@@ -461,8 +452,13 @@ local function createMainGUI()
     
     local function handleAddFriend()
         local inputText = string.gsub(nicknameBox.Text, "^%s*(.-)%s*$", "%1")
-        if inputText == "" then return end
+        
+        if inputText == "" then
+            return
+        end
+        
         local player = getPlayerByName(inputText)
+        
         if player then
             addFriendToList(player.Name)
         else
@@ -471,13 +467,17 @@ local function createMainGUI()
     end
     
     addButton.MouseButton1Click:Connect(handleAddFriend)
+    
     nicknameBox.FocusLost:Connect(function(enterPressed)
-        if enterPressed then handleAddFriend() end
+        if enterPressed then
+            handleAddFriend()
+        end
     end)
     
     updateStatusLabel()
     
     local isMinimized = false
+    
     closeButton.MouseButton1Click:Connect(function()
         if not isMinimized then
             mainFrame.Visible = false
@@ -493,7 +493,10 @@ local function createMainGUI()
             isMinimized = false
         end
     end)
-
+    
+    -- ========================================
+    -- PERFECT DRAG SYSTEM FOR MAIN FRAME
+    -- ========================================
     local UIS = game:GetService("UserInputService")
     local dragging = false
     local dragStart = nil
@@ -504,6 +507,7 @@ local function createMainGUI()
             dragging = true
             dragStart = input.Position
             startPos = mainFrame.Position
+            
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -515,10 +519,18 @@ local function createMainGUI()
     UIS.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
     
+    -- ========================================
+    -- PERFECT DRAG SYSTEM FOR ICON
+    -- ========================================
     local iconDragging = false
     local iconDragStart = nil
     local iconStartPos = nil
@@ -531,9 +543,12 @@ local function createMainGUI()
             iconDragStart = input.Position
             iconStartPos = iconButton.Position
             iconDragMoved = false
+            
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     iconDragging = false
+                    
+                    -- Jika tidak di-drag (hanya click), buka menu
                     if not iconDragMoved and isMinimized then
                         mainFrame.Visible = true
                         iconButton.Visible = false
@@ -547,10 +562,18 @@ local function createMainGUI()
     UIS.InputChanged:Connect(function(input)
         if iconDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - iconDragStart
+            
+            -- Check if moved beyond threshold
             if math.abs(delta.X) > dragThreshold or math.abs(delta.Y) > dragThreshold then
                 iconDragMoved = true
             end
-            iconButton.Position = UDim2.new(iconStartPos.X.Scale, iconStartPos.X.Offset + delta.X, iconStartPos.Y.Scale, iconStartPos.Y.Offset + delta.Y)
+            
+            iconButton.Position = UDim2.new(
+                iconStartPos.X.Scale,
+                iconStartPos.X.Offset + delta.X,
+                iconStartPos.Y.Scale,
+                iconStartPos.Y.Offset + delta.Y
+            )
         end
     end)
     
@@ -563,7 +586,8 @@ game:GetService('RunService').RenderStepped:connect(function()
             if v.Name ~= game:GetService('Players').LocalPlayer.Name then
                 local isFriend = false
                 for _, friendName in ipairs(_G.FriendList) do
-                    if string.lower(v.Name) == string.lower(friendName) or (v.DisplayName and string.lower(v.DisplayName) == string.lower(friendName)) then
+                    if string.lower(v.Name) == string.lower(friendName) or
+                       (v.DisplayName and string.lower(v.DisplayName) == string.lower(friendName)) then
                         isFriend = true
                         break
                     end
@@ -572,13 +596,19 @@ game:GetService('RunService').RenderStepped:connect(function()
                 if not isFriend then
                     pcall(function()
                         if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                            createHitbox(v.Character)
+                            v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+                            v.Character.HumanoidRootPart.Transparency = 1
+                            v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really blue")
+                            v.Character.HumanoidRootPart.Material = "Neon"
+                            v.Character.HumanoidRootPart.CanCollide = false
                         end
                     end)
                 else
                     pcall(function()
-                        if v.Character then
-                            removeHitbox(v.Character)
+                        if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                            v.Character.HumanoidRootPart.Size = Vector3.new(2, 2, 1)
+                            v.Character.HumanoidRootPart.Transparency = 1
+                            v.Character.HumanoidRootPart.CanCollide = true
                         end
                     end)
                 end
