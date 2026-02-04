@@ -1,4 +1,3 @@
-
 _G.HeadSize = 20
 _G.Disabled = true
 _G.FriendList = {}
@@ -99,8 +98,8 @@ local function createMainGUI()
     mainGui.Parent = CoreGui
     mainGui.ResetOnSpawn = false
     local iconButton = Instance.new("ImageButton")
-    iconButton.Size = UDim2.new(0, 55, 0, 55)
-    iconButton.Position = UDim2.new(0, 20, 0, 20)
+    iconButton.Size = UDim2.new(0, 45, 0, 45)
+    iconButton.Position = UDim2.new(0, 15, 0, 15)
     iconButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     iconButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
     iconButton.BorderSizePixel = 2
@@ -109,18 +108,18 @@ local function createMainGUI()
     iconButton.Active = true
     iconButton.Parent = mainGui
     local iconCorner = Instance.new("UICorner")
-    iconCorner.CornerRadius = UDim.new(0, 10)
+    iconCorner.CornerRadius = UDim.new(0.3, 0)
     iconCorner.Parent = iconButton
     local iconTooltip = Instance.new("TextLabel")
-    iconTooltip.Size = UDim2.new(0, 120, 0, 35)
-    iconTooltip.Position = UDim2.new(0, 60, 0, 10)
+    iconTooltip.Size = UDim2.new(0, 95, 0, 28)
+    iconTooltip.Position = UDim2.new(0, 50, 0, 9)
     iconTooltip.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     iconTooltip.BorderColor3 = Color3.fromRGB(255, 255, 255)
     iconTooltip.BorderSizePixel = 2
     iconTooltip.Text = "Open Menu"
     iconTooltip.TextColor3 = Color3.fromRGB(255, 255, 255)
     iconTooltip.Font = Enum.Font.GothamBold
-    iconTooltip.TextSize = 14
+    iconTooltip.TextSize = 11
     iconTooltip.Visible = false
     iconTooltip.Parent = iconButton
     local tooltipCorner = Instance.new("UICorner")
@@ -601,3 +600,4 @@ print("⚡ HITBOX PRO v2.0 LOADED!")
 print("👤 Created by: Nazam")
 print("📅 Updated: February 2026")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
