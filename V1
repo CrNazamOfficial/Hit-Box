@@ -3,6 +3,7 @@ _G.HeadSize = 20
 _G.Disabled = true
 _G.FriendList = {}
 _G.MaxFriends = 10
+_G.NoClipEnabled = false
 
 local function getPlayerByName(name)
     for _, player in pairs(game:GetService("Players"):GetPlayers()) do
@@ -103,6 +104,7 @@ local function createMainGUI()
     mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     mainGui.ResetOnSpawn = false
 
+
     local iconButton = Instance.new("ImageButton")
     iconButton.Name = "MinimizedIcon"
     iconButton.Size = UDim2.new(0, 35, 0, 35)
@@ -122,8 +124,8 @@ local function createMainGUI()
     
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2.new(0, 200, 0, 240)
-    mainFrame.Position = UDim2.new(0.5, -100, 0.5, -120)
+    mainFrame.Size = UDim2.new(0, 200, 0, 270)
+    mainFrame.Position = UDim2.new(0.5, -100, 0.5, -135)
     mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 255)
     mainFrame.BorderSizePixel = 2
@@ -196,10 +198,43 @@ local function createMainGUI()
     headerLine.BorderSizePixel = 0
     headerLine.Parent = mainFrame
     
+    local noClipButton = Instance.new("TextButton")
+    noClipButton.Name = "NoClipButton"
+    noClipButton.Size = UDim2.new(0.92, 0, 0, 26)
+    noClipButton.Position = UDim2.new(0.04, 0, 0, 32)
+    noClipButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    noClipButton.BorderColor3 = Color3.fromRGB(60, 60, 60)
+    noClipButton.BorderSizePixel = 1
+    noClipButton.Text = "NoClip: OFF"
+    noClipButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+    noClipButton.Font = Enum.Font.GothamBold
+    noClipButton.TextSize = 10
+    noClipButton.Parent = mainFrame
+    
+    local noClipCorner = Instance.new("UICorner")
+    noClipCorner.CornerRadius = UDim.new(0, 4)
+    noClipCorner.Parent = noClipButton
+    
+    noClipButton.MouseEnter:Connect(function()
+        if _G.NoClipEnabled then
+            noClipButton.BackgroundColor3 = Color3.fromRGB(35, 120, 35)
+        else
+            noClipButton.BackgroundColor3 = Color3.fromRGB(120, 35, 35)
+        end
+    end)
+    
+    noClipButton.MouseLeave:Connect(function()
+        if _G.NoClipEnabled then
+            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 100, 25)
+        else
+            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        end
+    end)
+    
     local inputFrame = Instance.new("Frame")
     inputFrame.Name = "InputFrame"
     inputFrame.Size = UDim2.new(0.92, 0, 0, 30)
-    inputFrame.Position = UDim2.new(0.04, 0, 0, 32)
+    inputFrame.Position = UDim2.new(0.04, 0, 0, 63)
     inputFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     inputFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
     inputFrame.BorderSizePixel = 1
@@ -248,10 +283,11 @@ local function createMainGUI()
         addButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     end)
 
+
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Name = "StatusLabel"
     statusLabel.Size = UDim2.new(0.92, 0, 0, 18)
-    statusLabel.Position = UDim2.new(0.04, 0, 0, 67)
+    statusLabel.Position = UDim2.new(0.04, 0, 0, 98)
     statusLabel.BackgroundTransparency = 1
     statusLabel.Text = "Friends: 0/10"
     statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -263,7 +299,7 @@ local function createMainGUI()
     local listLine = Instance.new("Frame")
     listLine.Name = "ListLine"
     listLine.Size = UDim2.new(0.92, 0, 0, 1)
-    listLine.Position = UDim2.new(0.04, 0, 0, 88)
+    listLine.Position = UDim2.new(0.04, 0, 0, 119)
     listLine.BackgroundColor3 = Color3.fromRGB(80, 80, 255)
     listLine.BorderSizePixel = 0
     listLine.Parent = mainFrame
@@ -271,7 +307,7 @@ local function createMainGUI()
     local friendsFrame = Instance.new("Frame")
     friendsFrame.Name = "FriendsFrame"
     friendsFrame.Size = UDim2.new(0.92, 0, 0, 125)
-    friendsFrame.Position = UDim2.new(0.04, 0, 0, 93)
+    friendsFrame.Position = UDim2.new(0.04, 0, 0, 124)
     friendsFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
     friendsFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
     friendsFrame.BorderSizePixel = 1
@@ -437,6 +473,20 @@ local function createMainGUI()
         end
     end)
     
+    noClipButton.MouseButton1Click:Connect(function()
+        _G.NoClipEnabled = not _G.NoClipEnabled
+        
+        if _G.NoClipEnabled then
+            noClipButton.Text = "NoClip: ON"
+            noClipButton.TextColor3 = Color3.fromRGB(80, 255, 80)
+            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 100, 25)
+        else
+            noClipButton.Text = "NoClip: OFF"
+            noClipButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        end
+    end)
+    
     updateStatusLabel()
     
     local isMinimized = false
@@ -456,6 +506,7 @@ local function createMainGUI()
             isMinimized = false
         end
     end)
+
 
     local UIS = game:GetService("UserInputService")
     local dragging = false
@@ -566,6 +617,17 @@ game:GetService('RunService').RenderStepped:connect(function()
                             v.Character.HumanoidRootPart.CanCollide = true
                         end
                     end)
+                end
+            end
+        end
+    end
+    
+    if _G.NoClipEnabled then
+        local player = game:GetService('Players').LocalPlayer
+        if player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
                 end
             end
         end
