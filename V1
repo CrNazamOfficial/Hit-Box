@@ -104,7 +104,6 @@ local function createMainGUI()
     mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     mainGui.ResetOnSpawn = false
 
-
     local iconButton = Instance.new("ImageButton")
     iconButton.Name = "MinimizedIcon"
     iconButton.Size = UDim2.new(0, 35, 0, 35)
@@ -282,8 +281,7 @@ local function createMainGUI()
     addButton.MouseLeave:Connect(function()
         addButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     end)
-
-
+    
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Name = "StatusLabel"
     statusLabel.Size = UDim2.new(0.92, 0, 0, 18)
@@ -507,7 +505,6 @@ local function createMainGUI()
         end
     end)
 
-
     local UIS = game:GetService("UserInputService")
     local dragging = false
     local dragStart = nil
@@ -622,12 +619,16 @@ game:GetService('RunService').RenderStepped:connect(function()
         end
     end
     
-    if _G.NoClipEnabled then
-        local player = game:GetService('Players').LocalPlayer
-        if player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
+    local player = game:GetService('Players').LocalPlayer
+    if player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                if _G.NoClipEnabled then
                     part.CanCollide = false
+                else
+                    if part.Name ~= "HumanoidRootPart" then
+                        part.CanCollide = true
+                    end
                 end
             end
         end
