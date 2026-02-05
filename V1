@@ -281,7 +281,7 @@ local function createMainGUI()
     addButton.MouseLeave:Connect(function()
         addButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     end)
-    
+
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Name = "StatusLabel"
     statusLabel.Size = UDim2.new(0.92, 0, 0, 18)
@@ -583,10 +583,13 @@ local function createMainGUI()
     return mainGui
 end
 
-game:GetService('RunService').RenderStepped:connect(function()
+local RunService = game:GetService('RunService')
+local Players = game:GetService('Players')
+
+RunService.RenderStepped:connect(function()
     if _G.Disabled then
-        for i,v in next, game:GetService('Players'):GetPlayers() do
-            if v.Name ~= game:GetService('Players').LocalPlayer.Name then
+        for i,v in next, Players:GetPlayers() do
+            if v.Name ~= Players.LocalPlayer.Name then
                 local isFriend = false
                 for _, friendName in ipairs(_G.FriendList) do
                     if string.lower(v.Name) == string.lower(friendName) or
@@ -619,17 +622,29 @@ game:GetService('RunService').RenderStepped:connect(function()
         end
     end
     
-    local player = game:GetService('Players').LocalPlayer
+    local player = Players.LocalPlayer
     if player.Character then
-        for _, part in pairs(player.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                if _G.NoClipEnabled then
+        if _G.NoClipEnabled then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
                     part.CanCollide = false
-                else
-                    if part.Name ~= "HumanoidRootPart" then
-                        part.CanCollide = true
-                    end
                 end
+            end
+            
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+            end
+        else
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.CanCollide = true
+                end
+            end
+            
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Physics then
+                humanoid:ChangeState(Enum.HumanoidStateType.Running)
             end
         end
     end
