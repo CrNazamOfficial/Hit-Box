@@ -15,14 +15,13 @@ local function getPlayerByName(name)
     return nil
 end
 
-local function createNotification()
+local function createNotificationHitbox()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "HitBoxNotification"
     screenGui.Parent = game.CoreGui
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "Notification"
     mainFrame.Size = UDim2.new(0, 180, 0, 60)
     mainFrame.Position = UDim2.new(0.5, -90, 0.15, 0)
     mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -36,7 +35,6 @@ local function createNotification()
     corner.Parent = mainFrame
     
     local mainText = Instance.new("TextLabel")
-    mainText.Name = "MainText"
     mainText.Size = UDim2.new(1, 0, 0.5, 0)
     mainText.Position = UDim2.new(0, 0, 0.1, 0)
     mainText.BackgroundTransparency = 1
@@ -47,7 +45,6 @@ local function createNotification()
     mainText.Parent = mainFrame
     
     local creditText = Instance.new("TextLabel")
-    creditText.Name = "CreditText"
     creditText.Size = UDim2.new(1, 0, 0.4, 0)
     creditText.Position = UDim2.new(0, 0, 0.55, 0)
     creditText.BackgroundTransparency = 1
@@ -60,52 +57,26 @@ local function createNotification()
     mainFrame.BackgroundTransparency = 1
     mainFrame.Position = UDim2.new(0.5, -90, 0.1, -30)
     
-    local fadeIn = game:GetService("TweenService"):Create(
-        mainFrame,
-        TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {BackgroundTransparency = 0}
-    )
-    
-    local slideDown = game:GetService("TweenService"):Create(
-        mainFrame,
-        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0.2),
-        {Position = UDim2.new(0.5, -90, 0.15, 0)}
-    )
+    local fadeIn = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0})
+    local slideDown = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -90, 0.15, 0)})
     
     fadeIn:Play()
     slideDown:Play()
     
     wait(2.5)
     
-    local fadeOut = game:GetService("TweenService"):Create(
-        mainFrame,
-        TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-        {BackgroundTransparency = 1}
-    )
-    
-    local slideUp = game:GetService("TweenService"):Create(
-        mainFrame,
-        TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-        {Position = UDim2.new(0.5, -90, 0.1, 0)}
-    )
-    
+    local fadeOut = game:GetService("TweenService"):Create(mainFrame, TweenInfo.new(0.4), {BackgroundTransparency = 1})
     fadeOut:Play()
-    slideUp:Play()
-    
-    fadeOut.Completed:Connect(function()
-        screenGui:Destroy()
-    end)
+    fadeOut.Completed:Connect(function() screenGui:Destroy() end)
 end
 
-local function createMainGUI()
+local function createHitboxGUI()
     local mainGui = Instance.new("ScreenGui")
     mainGui.Name = "HitBoxGUI"
     mainGui.Parent = game.CoreGui
-    mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     mainGui.ResetOnSpawn = false
-
+    
     local iconButton = Instance.new("ImageButton")
-    iconButton.Name = "MinimizedIcon"
     iconButton.Size = UDim2.new(0, 35, 0, 35)
     iconButton.Position = UDim2.new(0, 15, 0, 15)
     iconButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -113,48 +84,20 @@ local function createMainGUI()
     iconButton.BorderSizePixel = 2
     iconButton.Image = "rbxassetid://109307269006494"
     iconButton.Visible = false
-    iconButton.Active = true
-    iconButton.Draggable = false
     iconButton.Parent = mainGui
-    
-    local iconCorner = Instance.new("UICorner")
-    iconCorner.CornerRadius = UDim.new(0, 6)
-    iconCorner.Parent = iconButton
+    Instance.new("UICorner", iconButton).CornerRadius = UDim.new(0, 6)
     
     local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, 200, 0, 270)
     mainFrame.Position = UDim2.new(0.5, -100, 0.5, -135)
     mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
     mainFrame.BorderColor3 = Color3.fromRGB(80, 80, 255)
     mainFrame.BorderSizePixel = 2
-    mainFrame.Active = true
-    mainFrame.Draggable = false
-    mainFrame.Visible = true
     mainFrame.Parent = mainGui
-    
-    local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 8)
-    mainCorner.Parent = mainFrame
-    
-    local dragHandle = Instance.new("Frame")
-    dragHandle.Name = "DragHandle"
-    dragHandle.Size = UDim2.new(1, 0, 0, 25)
-    dragHandle.Position = UDim2.new(0, 0, 0, 0)
-    dragHandle.BackgroundTransparency = 1
-    dragHandle.Active = true
-    dragHandle.Parent = mainFrame
-    
-    local header = Instance.new("Frame")
-    header.Name = "Header"
-    header.Size = UDim2.new(1, 0, 0, 25)
-    header.Position = UDim2.new(0, 0, 0, 0)
-    header.BackgroundTransparency = 1
-    header.Parent = mainFrame
+    Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
     
     local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Size = UDim2.new(0.75, 0, 1, 0)
+    title.Size = UDim2.new(0.75, 0, 0, 25)
     title.Position = UDim2.new(0, 6, 0, 0)
     title.BackgroundTransparency = 1
     title.Text = "HITBOX"
@@ -162,128 +105,70 @@ local function createMainGUI()
     title.Font = Enum.Font.GothamBold
     title.TextSize = 12
     title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = header
+    title.Parent = mainFrame
     
-    local closeButton = Instance.new("TextButton")
-    closeButton.Name = "CloseButton"
-    closeButton.Size = UDim2.new(0, 20, 0, 20)
-    closeButton.Position = UDim2.new(1, -23, 0.5, -10)
-    closeButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    closeButton.BorderColor3 = Color3.fromRGB(80, 80, 255)
-    closeButton.BorderSizePixel = 1
-    closeButton.Text = "X"
-    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = 11
-    closeButton.Parent = header
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 20, 0, 20)
+    closeBtn.Position = UDim2.new(1, -23, 0, 2.5)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    closeBtn.BorderColor3 = Color3.fromRGB(80, 80, 255)
+    closeBtn.BorderSizePixel = 1
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 11
+    closeBtn.Parent = mainFrame
+    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
     
-    local closeCorner = Instance.new("UICorner")
-    closeCorner.CornerRadius = UDim.new(0, 4)
-    closeCorner.Parent = closeButton
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(0.92, 0, 0, 1)
+    line.Position = UDim2.new(0.04, 0, 0, 26)
+    line.BackgroundColor3 = Color3.fromRGB(80, 80, 255)
+    line.BorderSizePixel = 0
+    line.Parent = mainFrame
     
-    closeButton.MouseEnter:Connect(function()
-        closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    end)
-    
-    closeButton.MouseLeave:Connect(function()
-        closeButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    end)
-    
-    local headerLine = Instance.new("Frame")
-    headerLine.Name = "HeaderLine"
-    headerLine.Size = UDim2.new(0.92, 0, 0, 1)
-    headerLine.Position = UDim2.new(0.04, 0, 0, 26)
-    headerLine.BackgroundColor3 = Color3.fromRGB(80, 80, 255)
-    headerLine.BorderSizePixel = 0
-    headerLine.Parent = mainFrame
-    
-    local noClipButton = Instance.new("TextButton")
-    noClipButton.Name = "NoClipButton"
-    noClipButton.Size = UDim2.new(0.92, 0, 0, 26)
-    noClipButton.Position = UDim2.new(0.04, 0, 0, 32)
-    noClipButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    noClipButton.BorderColor3 = Color3.fromRGB(60, 60, 60)
-    noClipButton.BorderSizePixel = 1
-    noClipButton.Text = "NoClip: OFF"
-    noClipButton.TextColor3 = Color3.fromRGB(255, 80, 80)
-    noClipButton.Font = Enum.Font.GothamBold
-    noClipButton.TextSize = 10
-    noClipButton.Parent = mainFrame
-    
-    local noClipCorner = Instance.new("UICorner")
-    noClipCorner.CornerRadius = UDim.new(0, 4)
-    noClipCorner.Parent = noClipButton
-    
-    noClipButton.MouseEnter:Connect(function()
-        if _G.NoClipEnabled then
-            noClipButton.BackgroundColor3 = Color3.fromRGB(35, 120, 35)
-        else
-            noClipButton.BackgroundColor3 = Color3.fromRGB(120, 35, 35)
-        end
-    end)
-    
-    noClipButton.MouseLeave:Connect(function()
-        if _G.NoClipEnabled then
-            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 100, 25)
-        else
-            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        end
-    end)
+    local noClipBtn = Instance.new("TextButton")
+    noClipBtn.Size = UDim2.new(0.92, 0, 0, 26)
+    noClipBtn.Position = UDim2.new(0.04, 0, 0, 32)
+    noClipBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    noClipBtn.Text = "NoClip: OFF"
+    noClipBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+    noClipBtn.Font = Enum.Font.GothamBold
+    noClipBtn.TextSize = 10
+    noClipBtn.Parent = mainFrame
+    Instance.new("UICorner", noClipBtn).CornerRadius = UDim.new(0, 4)
     
     local inputFrame = Instance.new("Frame")
-    inputFrame.Name = "InputFrame"
     inputFrame.Size = UDim2.new(0.92, 0, 0, 30)
     inputFrame.Position = UDim2.new(0.04, 0, 0, 63)
     inputFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    inputFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
-    inputFrame.BorderSizePixel = 1
     inputFrame.Parent = mainFrame
+    Instance.new("UICorner", inputFrame).CornerRadius = UDim.new(0, 4)
     
-    local inputCorner = Instance.new("UICorner")
-    inputCorner.CornerRadius = UDim.new(0, 4)
-    inputCorner.Parent = inputFrame
+    local nameBox = Instance.new("TextBox")
+    nameBox.Size = UDim2.new(0.68, 0, 0.85, 0)
+    nameBox.Position = UDim2.new(0.03, 0, 0.075, 0)
+    nameBox.BackgroundTransparency = 1
+    nameBox.PlaceholderText = "Name..."
+    nameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameBox.Font = Enum.Font.Gotham
+    nameBox.TextSize = 10
+    nameBox.TextXAlignment = Enum.TextXAlignment.Left
+    nameBox.Parent = inputFrame
     
-    local nicknameBox = Instance.new("TextBox")
-    nicknameBox.Name = "NicknameBox"
-    nicknameBox.Size = UDim2.new(0.68, 0, 0.85, 0)
-    nicknameBox.Position = UDim2.new(0.03, 0, 0.075, 0)
-    nicknameBox.BackgroundTransparency = 1
-    nicknameBox.Text = ""
-    nicknameBox.PlaceholderText = "Name..."
-    nicknameBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
-    nicknameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    nicknameBox.Font = Enum.Font.Gotham
-    nicknameBox.TextSize = 10
-    nicknameBox.TextXAlignment = Enum.TextXAlignment.Left
-    nicknameBox.Parent = inputFrame
+    local addBtn = Instance.new("TextButton")
+    addBtn.Size = UDim2.new(0.26, 0, 0.85, 0)
+    addBtn.Position = UDim2.new(0.72, 0, 0.075, 0)
+    addBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    addBtn.BorderColor3 = Color3.fromRGB(80, 80, 255)
+    addBtn.Text = "+"
+    addBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    addBtn.Font = Enum.Font.GothamBold
+    addBtn.TextSize = 14
+    addBtn.Parent = inputFrame
+    Instance.new("UICorner", addBtn).CornerRadius = UDim.new(0, 4)
     
-    local addButton = Instance.new("TextButton")
-    addButton.Name = "AddButton"
-    addButton.Size = UDim2.new(0.26, 0, 0.85, 0)
-    addButton.Position = UDim2.new(0.72, 0, 0.075, 0)
-    addButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    addButton.BorderColor3 = Color3.fromRGB(80, 80, 255)
-    addButton.BorderSizePixel = 1
-    addButton.Text = "+"
-    addButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    addButton.Font = Enum.Font.GothamBold
-    addButton.TextSize = 14
-    addButton.Parent = inputFrame
-    
-    local addCorner = Instance.new("UICorner")
-    addCorner.CornerRadius = UDim.new(0, 4)
-    addCorner.Parent = addButton
-    
-    addButton.MouseEnter:Connect(function()
-        addButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    end)
-    
-    addButton.MouseLeave:Connect(function()
-        addButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-    end)
-
     local statusLabel = Instance.new("TextLabel")
-    statusLabel.Name = "StatusLabel"
     statusLabel.Size = UDim2.new(0.92, 0, 0, 18)
     statusLabel.Position = UDim2.new(0.04, 0, 0, 98)
     statusLabel.BackgroundTransparency = 1
@@ -294,293 +179,115 @@ local function createMainGUI()
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
     statusLabel.Parent = mainFrame
     
-    local listLine = Instance.new("Frame")
-    listLine.Name = "ListLine"
-    listLine.Size = UDim2.new(0.92, 0, 0, 1)
-    listLine.Position = UDim2.new(0.04, 0, 0, 119)
-    listLine.BackgroundColor3 = Color3.fromRGB(80, 80, 255)
-    listLine.BorderSizePixel = 0
-    listLine.Parent = mainFrame
-    
     local friendsFrame = Instance.new("Frame")
-    friendsFrame.Name = "FriendsFrame"
     friendsFrame.Size = UDim2.new(0.92, 0, 0, 125)
     friendsFrame.Position = UDim2.new(0.04, 0, 0, 124)
     friendsFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    friendsFrame.BorderColor3 = Color3.fromRGB(40, 40, 40)
-    friendsFrame.BorderSizePixel = 1
     friendsFrame.ClipsDescendants = true
     friendsFrame.Parent = mainFrame
-    
-    local friendsCorner = Instance.new("UICorner")
-    friendsCorner.CornerRadius = UDim.new(0, 4)
-    friendsCorner.Parent = friendsFrame
+    Instance.new("UICorner", friendsFrame).CornerRadius = UDim.new(0, 4)
     
     local scrollFrame = Instance.new("ScrollingFrame")
-    scrollFrame.Name = "ScrollFrame"
     scrollFrame.Size = UDim2.new(1, 0, 1, 0)
-    scrollFrame.Position = UDim2.new(0, 0, 0, 0)
     scrollFrame.BackgroundTransparency = 1
-    scrollFrame.BorderSizePixel = 0
     scrollFrame.ScrollBarThickness = 4
-    scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
     scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     scrollFrame.Parent = friendsFrame
     
     local listLayout = Instance.new("UIListLayout")
-    listLayout.Name = "ListLayout"
     listLayout.Padding = UDim.new(0, 3)
     listLayout.Parent = scrollFrame
     
-    local creditLabel = Instance.new("TextLabel")
-    creditLabel.Name = "CreditLabel"
-    creditLabel.Size = UDim2.new(1, 0, 0, 18)
-    creditLabel.Position = UDim2.new(0, 0, 1, -19)
-    creditLabel.BackgroundTransparency = 1
-    creditLabel.Text = "By: Nazam"
-    creditLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
-    creditLabel.Font = Enum.Font.Gotham
-    creditLabel.TextSize = 9
-    creditLabel.Parent = mainFrame
+    local credit = Instance.new("TextLabel")
+    credit.Size = UDim2.new(1, 0, 0, 18)
+    credit.Position = UDim2.new(0, 0, 1, -19)
+    credit.BackgroundTransparency = 1
+    credit.Text = "By: Nazam"
+    credit.TextColor3 = Color3.fromRGB(120, 120, 120)
+    credit.Font = Enum.Font.Gotham
+    credit.TextSize = 9
+    credit.Parent = mainFrame
     
-    local function updateStatusLabel()
-        local friendCount = #_G.FriendList
-        statusLabel.Text = string.format("Friends: %d/10", friendCount)
-        
-        if friendCount >= _G.MaxFriends then
-            statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-        else
-            statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-        end
+    local function updateStatus()
+        statusLabel.Text = string.format("Friends: %d/10", #_G.FriendList)
     end
     
-    local function addFriendToList(name)
-        if #_G.FriendList >= _G.MaxFriends then
-            nicknameBox.Text = "MAX!"
-            nicknameBox.TextColor3 = Color3.fromRGB(255, 50, 50)
-            wait(1)
-            nicknameBox.Text = ""
-            nicknameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-            return
-        end
-        
-        for _, friendName in ipairs(_G.FriendList) do
-            if string.lower(friendName) == string.lower(name) then
-                nicknameBox.Text = "EXISTS!"
-                nicknameBox.TextColor3 = Color3.fromRGB(255, 50, 50)
-                wait(1)
-                nicknameBox.Text = ""
-                nicknameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                return
-            end
-        end
-        
+    local function addFriend(name)
+        if #_G.FriendList >= 10 then return end
         table.insert(_G.FriendList, name)
         
-        local friendEntry = Instance.new("Frame")
-        friendEntry.Name = "FriendEntry_" .. name
-        friendEntry.Size = UDim2.new(1, -6, 0, 24)
-        friendEntry.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        friendEntry.BorderColor3 = Color3.fromRGB(40, 40, 40)
-        friendEntry.BorderSizePixel = 1
+        local entry = Instance.new("Frame")
+        entry.Size = UDim2.new(1, -6, 0, 24)
+        entry.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        Instance.new("UICorner", entry).CornerRadius = UDim.new(0, 4)
         
-        local entryCorner = Instance.new("UICorner")
-        entryCorner.CornerRadius = UDim.new(0, 4)
-        entryCorner.Parent = friendEntry
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(0.78, 0, 1, 0)
+        label.Position = UDim2.new(0, 5, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = name
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 9
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = entry
         
-        local nameLabel = Instance.new("TextLabel")
-        nameLabel.Name = "NameLabel"
-        nameLabel.Size = UDim2.new(0.78, 0, 1, 0)
-        nameLabel.Position = UDim2.new(0, 5, 0, 0)
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = name
-        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameLabel.Font = Enum.Font.Gotham
-        nameLabel.TextSize = 9
-        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        nameLabel.TextTruncate = Enum.TextTruncate.AtEnd
-        nameLabel.Parent = friendEntry
+        local removeBtn = Instance.new("TextButton")
+        removeBtn.Size = UDim2.new(0, 18, 0, 18)
+        removeBtn.Position = UDim2.new(1, -21, 0.5, -9)
+        removeBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+        removeBtn.BorderColor3 = Color3.fromRGB(255, 50, 50)
+        removeBtn.Text = "X"
+        removeBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+        removeBtn.Font = Enum.Font.GothamBold
+        removeBtn.TextSize = 9
+        removeBtn.Parent = entry
+        Instance.new("UICorner", removeBtn).CornerRadius = UDim.new(0, 3)
         
-        local removeButton = Instance.new("TextButton")
-        removeButton.Name = "RemoveButton"
-        removeButton.Size = UDim2.new(0, 18, 0, 18)
-        removeButton.Position = UDim2.new(1, -21, 0.5, -9)
-        removeButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-        removeButton.BorderColor3 = Color3.fromRGB(255, 50, 50)
-        removeButton.BorderSizePixel = 1
-        removeButton.Text = "X"
-        removeButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-        removeButton.Font = Enum.Font.GothamBold
-        removeButton.TextSize = 9
-        removeButton.Parent = friendEntry
-        
-        local removeCorner = Instance.new("UICorner")
-        removeCorner.CornerRadius = UDim.new(0, 3)
-        removeCorner.Parent = removeButton
-        
-        removeButton.MouseButton1Click:Connect(function()
-            for i, friendName in ipairs(_G.FriendList) do
-                if friendName == name then
-                    table.remove(_G.FriendList, i)
-                    break
-                end
+        removeBtn.MouseButton1Click:Connect(function()
+            for i, v in ipairs(_G.FriendList) do
+                if v == name then table.remove(_G.FriendList, i) break end
             end
-            
-            friendEntry:Destroy()
-            updateStatusLabel()
+            entry:Destroy()
+            updateStatus()
             scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
         end)
         
-        removeButton.MouseEnter:Connect(function()
-            removeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-            removeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        end)
-        
-        removeButton.MouseLeave:Connect(function()
-            removeButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-            removeButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-        end)
-        
-        friendEntry.Parent = scrollFrame
+        entry.Parent = scrollFrame
         scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
-        updateStatusLabel()
-        nicknameBox.Text = ""
+        updateStatus()
+        nameBox.Text = ""
     end
     
-    local function handleAddFriend()
-        local inputText = string.gsub(nicknameBox.Text, "^%s*(.-)%s*$", "%1")
-        
-        if inputText == "" then
-            return
-        end
-        
-        local player = getPlayerByName(inputText)
-        
-        if player then
-            addFriendToList(player.Name)
-        else
-            addFriendToList(inputText)
-        end
-    end
-    
-    addButton.MouseButton1Click:Connect(handleAddFriend)
-    
-    nicknameBox.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            handleAddFriend()
-        end
+    addBtn.MouseButton1Click:Connect(function()
+        local text = nameBox.Text:match("^%s*(.-)%s*$")
+        if text ~= "" then addFriend(text) end
     end)
     
-    noClipButton.MouseButton1Click:Connect(function()
+    noClipBtn.MouseButton1Click:Connect(function()
         _G.NoClipEnabled = not _G.NoClipEnabled
-        
         if _G.NoClipEnabled then
-            noClipButton.Text = "NoClip: ON"
-            noClipButton.TextColor3 = Color3.fromRGB(80, 255, 80)
-            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 100, 25)
+            noClipBtn.Text = "NoClip: ON"
+            noClipBtn.TextColor3 = Color3.fromRGB(80, 255, 80)
+            noClipBtn.BackgroundColor3 = Color3.fromRGB(25, 100, 25)
         else
-            noClipButton.Text = "NoClip: OFF"
-            noClipButton.TextColor3 = Color3.fromRGB(255, 80, 80)
-            noClipButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+            noClipBtn.Text = "NoClip: OFF"
+            noClipBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+            noClipBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
         end
     end)
     
-    updateStatusLabel()
-    
-    local isMinimized = false
-    
-    closeButton.MouseButton1Click:Connect(function()
-        if not isMinimized then
-            mainFrame.Visible = false
-            iconButton.Visible = true
-            isMinimized = true
-        end
+    local isMin = false
+    closeBtn.MouseButton1Click:Connect(function()
+        mainFrame.Visible = false
+        iconButton.Visible = true
+        isMin = true
     end)
-    
     iconButton.MouseButton1Click:Connect(function()
-        if isMinimized then
-            mainFrame.Visible = true
-            iconButton.Visible = false
-            isMinimized = false
-        end
+        mainFrame.Visible = true
+        iconButton.Visible = false
+        isMin = false
     end)
-
-    local UIS = game:GetService("UserInputService")
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-    
-    dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = mainFrame.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-    
-    local iconDragging = false
-    local iconDragStart = nil
-    local iconStartPos = nil
-    local dragThreshold = 5
-    local iconDragMoved = false
-    
-    iconButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            iconDragging = true
-            iconDragStart = input.Position
-            iconStartPos = iconButton.Position
-            iconDragMoved = false
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    iconDragging = false
-                    
-                    if not iconDragMoved and isMinimized then
-                        mainFrame.Visible = true
-                        iconButton.Visible = false
-                        isMinimized = false
-                    end
-                end
-            end)
-        end
-    end)
-    
-    UIS.InputChanged:Connect(function(input)
-        if iconDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - iconDragStart
-            
-            if math.abs(delta.X) > dragThreshold or math.abs(delta.Y) > dragThreshold then
-                iconDragMoved = true
-            end
-            
-            iconButton.Position = UDim2.new(
-                iconStartPos.X.Scale,
-                iconStartPos.X.Offset + delta.X,
-                iconStartPos.Y.Scale,
-                iconStartPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-    
-    return mainGui
 end
 
 local RunService = game:GetService('RunService')
@@ -588,7 +295,7 @@ local Players = game:GetService('Players')
 
 RunService.RenderStepped:connect(function()
     if _G.Disabled then
-        for i,v in next, Players:GetPlayers() do
+        for _, v in next, Players:GetPlayers() do
             if v.Name ~= Players.LocalPlayer.Name then
                 local isFriend = false
                 for _, friendName in ipairs(_G.FriendList) do
@@ -599,31 +306,29 @@ RunService.RenderStepped:connect(function()
                     end
                 end
                 
-                if not isFriend then
-                    pcall(function()
-                        if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                pcall(function()
+                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        if not isFriend then
                             v.Character.HumanoidRootPart.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
                             v.Character.HumanoidRootPart.Transparency = 1
                             v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really blue")
                             v.Character.HumanoidRootPart.Material = "Neon"
                             v.Character.HumanoidRootPart.CanCollide = false
-                        end
-                    end)
-                else
-                    pcall(function()
-                        if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        else
                             v.Character.HumanoidRootPart.Size = Vector3.new(2, 2, 1)
                             v.Character.HumanoidRootPart.Transparency = 1
                             v.Character.HumanoidRootPart.CanCollide = true
                         end
-                    end)
-                end
+                    end
+                end)
             end
         end
     end
     
     local player = Players.LocalPlayer
     if player.Character then
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        
         if _G.NoClipEnabled then
             for _, part in pairs(player.Character:GetDescendants()) do
                 if part:IsA("BasePart") then
@@ -631,27 +336,28 @@ RunService.RenderStepped:connect(function()
                 end
             end
             
-            local humanoid = player.Character:FindFirstChild("Humanoid")
-            if humanoid then
+            if humanoid and humanoid:GetState() ~= Enum.HumanoidStateType.Physics then
                 humanoid:ChangeState(Enum.HumanoidStateType.Physics)
             end
         else
             for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                    part.CanCollide = true
+                if part:IsA("BasePart") then
+                    if part.Name == "HumanoidRootPart" or part.Name == "LowerTorso" or part.Name == "UpperTorso" or part.Name == "Head" then
+                        part.CanCollide = false
+                    else
+                        part.CanCollide = true
+                    end
                 end
             end
             
-            local humanoid = player.Character:FindFirstChild("Humanoid")
             if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Physics then
-                humanoid:ChangeState(Enum.HumanoidStateType.Running)
+                humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
             end
         end
     end
 end)
 
-createNotification()
-createMainGUI()
+createNotificationHitbox()
+createHitboxGUI()
+print("HitBox System Loaded! By: Nazam")
 
-print("Hit Box System Loaded!")
-print("By: Nazam")
